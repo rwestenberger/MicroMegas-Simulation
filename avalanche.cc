@@ -56,11 +56,11 @@ int main(int argc, char * argv[]) {
     gas->SetComposition("ar", 93., "co2", 7.);   // Specify the gas mixture (Ar/CO2 70:30)
 
     // Import an Elmer-created LEM and the weighting field for the readout electrode.
-    ComponentElmer * elmA = new ComponentElmer("elementaryCell/mesh.header","elementaryCell/mesh.elements","elementaryCell/mesh.nodes","elementaryCell/dielectrics.dat","elementaryCell/elementaryCell.result","cm");
+    ComponentElmer * elmA = new ComponentElmer("geometry/elementaryCell/mesh.header","geometry/elementaryCell/mesh.elements","geometry/elementaryCell/mesh.nodes","geometry/elementaryCell/dielectrics.dat","geometry/elementaryCell/elementaryCell.result","cm");
     elmA->EnablePeriodicityX();
     elmA->EnablePeriodicityY();
     elmA->SetMedium(0,gas);
-    elmA->SetWeightingField("elementaryCell/elementaryCell_weight.result","wtlel");
+    elmA->SetWeightingField("geometry/elementaryCell/elementaryCell_weight.result","wtlel");
 
     // Set up a sensorA object.
     Sensor* sensorA = new Sensor();

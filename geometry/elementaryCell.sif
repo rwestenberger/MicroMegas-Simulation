@@ -25,7 +25,7 @@ $WTlcp = 0
 $WTlel = 0
 
 Header
-  Mesh DB "." "elementaryCell"
+  Mesh DB "elementaryCell" "elementaryCell"
 End
 
 Simulation
