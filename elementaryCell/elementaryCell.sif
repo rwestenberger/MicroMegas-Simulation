@@ -1,0 +1,227 @@
+!
+! gemcell.sif
+!
+! ElmerSolver input file for solution of the amplification region of a Micromegas detector fields.
+!
+! This is a modified version of "elstatics.sif" from the Elmer tutorials.
+! (see ElmerTutorials manual, Tutorial 14)
+!
+Check Keywords Warn
+
+! Set drift distance, E fields, and voltage between GEMs
+! dist: distance in cm
+! Edrift: drift field in V/cm
+! Etrans: transfer field in V/cm
+! deltaV: voltage (in V) between GEMs
+$ldist = 0.2
+$udist = 0.5
+$Edrift = 50
+$Etrans = 1000
+$deltaV = 850
+
+$WTuel = 0
+$WTucp = 0
+$WTlcp = 0
+$WTlel = 0
+
+Header
+  Mesh DB "." "elementaryCell"
+End
+
+Simulation
+  Coordinate System = Cartesian 3D
+  Simulation Type = Steady State
+  Steady State Max Iterations = 1
+  Output File = "elementaryCell.result"
+  Post File = "elementaryCell.ep"
+End
+
+Constants
+  Permittivity Of Vacuum = 8.8542e-12
+End
+
+Body 1
+  Equation = 1
+  Material = 1
+End
+
+Body 2
+  Equation = 1
+  Material = 2
+End
+
+Body 3
+  Equation = 1
+  Material = 3
+End
+
+Body 4
+	Equation = 1
+	Material = 4
+End
+
+
+
+Equation 1
+  Active Solvers(1) = 1
+  Calculate Electric Energy = True
+End
+
+Solver 1
+  Equation = Stat Elec Solver
+  Variable = Potential
+  Variable DOFs = 1
+  Procedure = "StatElecSolve" "StatElecSolver"
+  Calculate Electric Field = True
+  Calculate Electric Flux = False
+  Linear System Solver = Iterative
+  Linear System Iterative Method = BiCGStab
+  Linear System Max Iterations = 1000
+  Linear System Abort Not Converged = True
+  Linear System Convergence Tolerance = 1.0e-10
+  Linear System Preconditioning = ILU1
+  Steady State Convergence Tolerance = 5.0e-7
+!  Adaptive Mesh Refinement = True
+!  Adaptive Remesh = True
+!  Adaptive Save Mesh = True
+!  Adaptive Error Limit = 1.0e-12
+End
+
+! Gas
+Material 1
+  Relative Permittivity = 1
+  Density = 1
+End
+
+! PCB
+Material 2
+  Relative Permittivity = 4
+  Density = 2
+End
+
+! Copper
+Material 3
+  Relative Permittivity = 1.0e10
+  Density = 3
+End
+
+! Mesh
+Material 4
+	Relative Permittivity = 1.0e10
+	Density = 3
+End
+
+! Cathode
+Boundary Condition 1
+  Target Boundaries = 1
+  Potential = -300
+End
+
+! PCB
+Boundary Condition 2
+  Target Boundaries = 2
+  ! Potential = 0
+End
+
+! Strip
+Boundary Condition 3
+  Target Boundaries = 3
+  Potential = 500
+End
+
+! Front
+Boundary Condition 4
+  Target Boundaries = 4
+!  Periodic BC = 6
+! Periodic BC Potential = Logical True
+End
+!Back linked to front
+Boundary Condition 6
+  Target Boundaries = 6
+  Periodic BC = 4
+  Periodic BC Potential = Logical True
+End
+
+
+!Right side
+Boundary Condition 5
+  Target Boundaries = 5
+!  Periodic BC = 7
+!  Periodic BC Potential = Logical True
+End
+
+
+! Left side linked to right side
+Boundary Condition 7
+  Target Boundaries = 7
+  Periodic BC = 5
+  Periodic BC Potential = Logical True
+End
+
+! Front down
+!Boundary Condition 8
+!  Target Boundaries = 8
+!  Periodic BC = 10
+!  Periodic BC Potential = Logical True
+!End
+
+!Right side down
+!Boundary Condition 9
+!  Target Boundaries = 9
+!  Periodic BC = 11
+!  Periodic BC Potential = Logical True
+!End
+
+!Back linked to front down
+!Boundary Condition 10
+!  Target Boundaries = 10
+!  Periodic BC = 8
+!  Periodic BC Potential = Logical True
+!End
+
+! Left side linked to right side down
+!Boundary Condition 11
+!  Target Boundaries = 11
+!  Periodic BC = 9
+!  Periodic BC Potential = Logical True
+!End
+
+!Mesh at front 
+!Boundary Condition 10
+!  Target Boundaries = 10
+!   Periodic BC = 11
+!  Periodic BC Potential = Logical True
+!End
+
+!Mesh at back
+!Boundary Condition 11
+!  Target Boundaries = 11
+!  Periodic BC = 12
+!  Periodic BC Potential = Logical True
+!End
+
+!Mesh at left
+!Boundary Condition 12
+!  Target Boundaries = 12
+!  Periodic BC = 13
+!  Periodic BC Potential = Logical True
+!End
+
+!Mesh at right
+!Boundary Condition 13
+!  Target Boundaries = 13
+!  Periodic BC =14
+!  Periodic BC Potential = Logical True
+!End
+
+!wire surface
+Boundary Condition 8
+  Target Boundaries = 8
+  Potential = 0
+End
+
+!bottom of PCB
+Boundary Condition 9
+	Target Boundaries = 9
+	! Potential = 0
+End
