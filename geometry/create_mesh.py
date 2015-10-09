@@ -10,8 +10,6 @@ from math import *
 class ParamCurv(QtGui.QWidget):
 	def __init__(self):
 		super(ParamCurv, self).__init__()
-		FreeCAD.Console.PrintMessage("Hello World!")
-		print("test")
 		self.initUI()
 		
 	def __del__(self):
@@ -46,50 +44,59 @@ class ParamCurv(QtGui.QWidget):
 		layout.addWidget(self.button_exit, 4, 1)
 		self.setLayout(layout)
 		# Connectors
-		QtCore.QObject.connect(self.button_create, QtCore.SIGNAL("pressed()"),self.DrawCurve)
+		QtCore.QObject.connect(self.button_create, QtCore.SIGNAL("pressed()"),self.draw_mesh)
 		QtCore.QObject.connect(self.button_exit, QtCore.SIGNAL("pressed()"),self.Close)
 
-	def DrawCurve(self):
+	def draw_mesh(self):
 		try:
 			wire_count = int(self.wire_count_edit.text())
-			mesh_lattice_const = float(self.mesh_lattice_const_edit.text())
-			wire_diameter = float(self.wire_diameter_edit.text())
+			mesh_lattice_const = float(self.mesh_lattice_const_edit.text())*1e-3
+			wire_diameter = float(self.wire_diameter_edit.text())*1e-3
 		except:
 			FreeCAD.Console.PrintError("Error in evaluating the parameters")
 
-		try:
-			for wire in range(wire_count):
-				# draw wire
-				vectors = []
-				num_steps = wire_count*4
-				sign = 1 if wire % 2 else -1 # to mirror every second wire
+		objects = {}
+		for direction in ["x", "y"]:
+			objects[direction] = []
+			for wire_num in range(wire_count):
+				FreeCAD.Console.PrintMessage("{}: {}\n".format(direction, wire_num))
 
-				for i in range(int(num_steps)+1):
-					t = float(i)/float(num_steps) * wire_count * 2*pi + pi/2. # to start at max
+				curve, circle, wire = self.draw_wire(wire_diameter, wire_count, mesh_lattice_const)
+				objects[direction].append((curve, circle, wire))
 
-					vector_x = wire_count * mesh_lattice_const * float(i)/float(num_steps)
-					vector_y = wire*mesh_lattice_const
-					vector_z = sign*sin(t)*wire_diameter/2. # TODO: safety distance
+				# position objects
+				if direction == "x":
+					for obj in objects[direction][wire_num]:
+						obj.Placement.Position += FreeCAD.Vector(0, wire_num*mesh_lattice_const, 0)
+				else:
+					for obj in objects[direction][wire_num]:
+						obj.Placement.Rotation += FreeCAD.Vector(90, 0, 0)
+						obj.Placement.Position += FreeCAD.Vector(wire_num*mesh_lattice_const, 0, 0)
 
-					vectors.append(FreeCAD.Vector(vector_x,vector_y,vector_z))
+		
+	def draw_wire(self, wire_diameter, wire_count, mesh_lattice_const):
+		vectors = []
+		num_steps = wire_count*10
+		for i in range(int(num_steps)+1):
+			t = float(i)/float(num_steps) * 2*pi * wire_count/2. + pi/2. # to start at max/min
+			vector_x = wire_count * mesh_lattice_const * float(i)/float(num_steps)
+			vector_z = sin(t)*wire_diameter/2. # TODO: safety distance
+			vectors.append(FreeCAD.Vector(vector_x, 0, vector_z))
 
-				curve = Part.makePolygon(vectors)
-				Draft.makeBSpline(curve, closed=False, face=False)
+		curve = Part.makePolygon(vectors)
+		wire_spline = Draft.makeBSpline(curve, closed=False, face=False)
+		circle = Draft.makeCircle(radius=wire_diameter/2., face=True, support=None)
+		circle.Placement = FreeCAD.Placement(FreeCAD.Vector(0,0,wire_diameter/2.), FreeCAD.Rotation(FreeCAD.Vector(0,1,0), 90))
 
-				# draw circle
-				pl = FreeCAD.Placement()
-				pl.Rotation = FreeCAD.Rotation(FreeCAD.Vector(0,1,0), 90)
-				pl.Base = FreeCAD.Vector(vectors[0])
-				Draft.makeCircle(radius=wire_diameter/2., placement=pl, face=True, support=None)
+		obj = FreeCAD.activeDocument().addObject('Part::Feature', 'wire')
+		sweep = Part.Wire(wire_spline.Shape).makePipeShell([circle.Shape], True, False)
+		obj.Shape = sweep
 
-				# sweep
-				#App.getDocument('Unnamed').ActiveObject.Sections=[App.getDocument('Unnamed').Circle, ]
-				#App.getDocument('Unnamed').ActiveObject.Spine=(App.ActiveDocument.BSpline,["Edge1"])
-				#App.getDocument('Unnamed').ActiveObject.Solid=True
-				#App.getDocument('Unnamed').ActiveObject.Frenet=False
-		except:
-			FreeCAD.Console.PrintError("Error while creating the mesh")
-			
+		FreeCAD.activeDocument().removeObject(wire_spline.Name)
+		FreeCAD.activeDocument().removeObject(circle.Name)
+
+		return obj
+
 	def Close(self):
 		self.close()
 		d.close()
@@ -101,5 +108,3 @@ d.setWidget(ParamCurv())
 d.toggleViewAction().setText("Mesh Creator")
 d.setAttribute(QtCore.Qt.WA_DeleteOnClose)
 mw.addDockWidget(QtCore. Qt.RightDockWidgetArea, d)
-
-
