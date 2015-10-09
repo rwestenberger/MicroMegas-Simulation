@@ -5,9 +5,9 @@ import FreeCAD, Part, Draft
 from PySide import QtGui,QtCore
 from math import *
 
-class ParamCurv(QtGui.QWidget):
+class MeshGenerator(QtGui.QWidget):
 	def __init__(self):
-		super(ParamCurv, self).__init__()
+		super(MeshGenerator, self).__init__()
 		self.initUI()
 		
 	def __del__(self):
@@ -20,8 +20,10 @@ class ParamCurv(QtGui.QWidget):
 		self.sb_wire_count.setValue(4)
 		self.sb_wire_count.setMaximum(1000)
 		self.sb_wire_count.setMinimum(1)
+		self.sb_wire_count.setEnabled(False)
 
 		self.cb_create_unit = QtGui.QCheckBox("Create Unit Cell", self)
+		self.cb_create_unit.setCheckState(QtCore.Qt.Checked)
 
 		self.label_mesh_lattice_const = QtGui.QLabel(u"Mesh lattice constant (µm) ",self)
 		self.sb_mesh_lattice_const = QtGui.QDoubleSpinBox(self)
@@ -31,7 +33,7 @@ class ParamCurv(QtGui.QWidget):
 
 		self.label_wire_diameter = QtGui.QLabel(u"Wire diameter (µm) ",self)
 		self.sb_wire_diameter = QtGui.QDoubleSpinBox(self)
-		self.sb_wire_diameter.setValue(20.)
+		self.sb_wire_diameter.setValue(28.)
 		self.sb_wire_diameter.setMaximum(500.)
 		self.sb_wire_diameter.setMinimum(.01)
 
@@ -63,16 +65,15 @@ class ParamCurv(QtGui.QWidget):
 			self.sb_wire_count.setEnabled(True)
 
 	def draw_mesh(self):
+		'''Generates a complete mesh or unit cell from single mesh wires.'''
 		try:
 			wire_count = 4 if self.cb_create_unit.isChecked() else int(self.sb_wire_count.text())
 			mesh_lattice_const = float(self.sb_mesh_lattice_const.text())*1e-3
 			wire_diameter = float(self.sb_wire_diameter.text())*1e-3
-			if wire_diameter > mesh_lattice_const/2.:
-				FreeCAD.Console.PrintError("Wire radius must be smaller than mesh lattice constant!")
 		except:
 			FreeCAD.Console.PrintError("Error in evaluating the parameters")
 
-		safety_distance = 1e-3
+		safety_distance = 1e-3 # to prevent overlap of wires, which can cause trouble in later union or common operations
 
 		wires = {}
 		for direction in ["x", "y"]:
@@ -85,40 +86,44 @@ class ParamCurv(QtGui.QWidget):
 					wire.Placement.Base += FreeCAD.Vector(0, wire_num*mesh_lattice_const, 0)
 					if wire_num%2:
 						wire.Placement.Rotation = FreeCAD.Rotation(FreeCAD.Vector(1,0,0), 180)
-						wire.Placement.Base += FreeCAD.Vector(0, 0, safety_distance/2.)
+					else:
+						wire.Placement.Base += FreeCAD.Vector(0, 0, 2*safety_distance)
 				else:
 					wire.Placement.Rotation = FreeCAD.Rotation(FreeCAD.Vector(0,0,1), 90)
-					wire.Placement.Base += FreeCAD.Vector(wire_num*mesh_lattice_const, 0, -safety_distance/2.)
+					wire.Placement.Base += FreeCAD.Vector(wire_num*mesh_lattice_const, 0, 0)
 					if not wire_num%2:
 						wire.Placement.Rotation = wire.Placement.Rotation.multiply(FreeCAD.Rotation(FreeCAD.Vector(1,0,0), 180))
+					else:
+						wire.Placement.Base += FreeCAD.Vector(0, 0, 2*safety_distance)
 
 				wires[direction].append(wire)
 
 		mesh = FreeCAD.activeDocument().addObject("Part::MultiFuse","Mesh")
 		mesh.Shapes = wires["x"] + wires["y"]
-		FreeCAD.activeDocument().recompute()
+		mesh.Placement.Base = FreeCAD.Vector(-wire_count/2.*mesh_lattice_const, -wire_count/2.*mesh_lattice_const, 0) # translate mesh to origin
 
 		if self.cb_create_unit.isChecked():
 			unit_cell_bounding_box = FreeCAD.activeDocument().addObject("Part::Box","Unit Cell Bounding Box")
 			unit_cell_bounding_box.Length = mesh_lattice_const*2.
 			unit_cell_bounding_box.Width = mesh_lattice_const*2.
 			unit_cell_bounding_box.Height = mesh_lattice_const*2.
-			unit_cell_bounding_box.Placement.Base = FreeCAD.Vector(mesh_lattice_const, mesh_lattice_const, -mesh_lattice_const)
+			unit_cell_bounding_box.Placement.Base = FreeCAD.Vector(-mesh_lattice_const, -mesh_lattice_const, -mesh_lattice_const)
 
 			unit_cell = FreeCAD.activeDocument().addObject("Part::MultiCommon", "Unit Cell")
 			unit_cell.Shapes = [unit_cell_bounding_box, mesh]
-			mesh.Visibility = False
-
-			FreeCAD.activeDocument().recompute()
+		
+		mesh.touch() # to force recomputation
+		FreeCAD.ActiveDocument.recompute()
 
 		
 	def draw_wire(self, wire_diameter, wire_count, mesh_lattice_const, safety_distance=0.1e-3):
+		'''Generates a single mesh wire in x direction.'''
 		vectors = []
-		num_steps = wire_count*10
+		num_steps = wire_count*5
 		for i in range(int(num_steps)+1):
 			t = float(i)/float(num_steps) * 2*pi * wire_count/2. + pi/2. # to start at max/min
 			vector_x = wire_count * mesh_lattice_const * float(i)/float(num_steps)
-			vector_z = sin(t)*(wire_diameter/2. + safety_distance)
+			vector_z = sin(t)*(wire_diameter/2.+safety_distance)
 			vectors.append(FreeCAD.Vector(vector_x, 0, vector_z))
 
 		curve = Part.makePolygon(vectors)
@@ -139,10 +144,9 @@ class ParamCurv(QtGui.QWidget):
 		self.close()
 		d.close()
 
-# Run ParamCurv
 mw = FreeCADGui.getMainWindow()
 d = QtGui.QDockWidget()
-d.setWidget(ParamCurv())
+d.setWidget(MeshGenerator())
 d.toggleViewAction().setText("Mesh Creator")
 d.setAttribute(QtCore.Qt.WA_DeleteOnClose)
 d.setWindowTitle("Mesh Creator")
