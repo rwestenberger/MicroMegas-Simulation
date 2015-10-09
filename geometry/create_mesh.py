@@ -17,9 +17,11 @@ class ParamCurv(QtGui.QWidget):
 		# Parameters
 		self.label_wire_count = QtGui.QLabel("Wire count ",self)
 		self.sb_wire_count = QtGui.QSpinBox(self)
-		self.sb_wire_count.setValue(2)
+		self.sb_wire_count.setValue(4)
 		self.sb_wire_count.setMaximum(1000)
 		self.sb_wire_count.setMinimum(1)
+
+		self.cb_create_unit = QtGui.QCheckBox("Create Unit Cell", self)
 
 		self.label_mesh_lattice_const = QtGui.QLabel(u"Mesh lattice constant (µm) ",self)
 		self.sb_mesh_lattice_const = QtGui.QDoubleSpinBox(self)
@@ -34,27 +36,35 @@ class ParamCurv(QtGui.QWidget):
 		self.sb_wire_diameter.setMinimum(.01)
 
 		# Ok and cancel buttons
-		self.button_create = QtGui.QPushButton("Create Mesh",self)
-		self.button_exit = QtGui.QPushButton("Close",self)
+		self.button_create = QtGui.QPushButton("Create Mesh", self)
+		self.button_exit = QtGui.QPushButton("Close", self)
 
 		# Layout
 		layout = QtGui.QGridLayout()
 		layout.addWidget(self.label_wire_count, 1, 0)
 		layout.addWidget(self.sb_wire_count, 1, 1)
-		layout.addWidget(self.label_mesh_lattice_const, 2, 0)
-		layout.addWidget(self.sb_mesh_lattice_const, 2, 1)
-		layout.addWidget(self.label_wire_diameter, 3, 0)
-		layout.addWidget(self.sb_wire_diameter, 3, 1)
-		layout.addWidget(self.button_create, 4, 0)
-		layout.addWidget(self.button_exit, 4, 1)
+		layout.addWidget(self.cb_create_unit, 2, 0)
+		layout.addWidget(self.label_mesh_lattice_const, 3, 0)
+		layout.addWidget(self.sb_mesh_lattice_const, 3, 1)
+		layout.addWidget(self.label_wire_diameter, 4, 0)
+		layout.addWidget(self.sb_wire_diameter, 4, 1)
+		layout.addWidget(self.button_create, 5, 0)
+		layout.addWidget(self.button_exit, 5, 1)
 		self.setLayout(layout)
 		# Connectors
 		QtCore.QObject.connect(self.button_create, QtCore.SIGNAL("pressed()"),self.draw_mesh)
 		QtCore.QObject.connect(self.button_exit, QtCore.SIGNAL("pressed()"),self.Close)
+		self.cb_create_unit.stateChanged.connect(self.create_unit_state)
+
+	def create_unit_state(self, state):
+		if state == QtCore.Qt.Checked:
+			self.sb_wire_count.setEnabled(False)
+		else:
+			self.sb_wire_count.setEnabled(True)
 
 	def draw_mesh(self):
 		try:
-			wire_count = int(self.sb_wire_count.text())
+			wire_count = 4 if self.cb_create_unit.isChecked() else int(self.sb_wire_count.text())
 			mesh_lattice_const = float(self.sb_mesh_lattice_const.text())*1e-3
 			wire_diameter = float(self.sb_wire_diameter.text())*1e-3
 			if wire_diameter > mesh_lattice_const/2.:
@@ -62,29 +72,49 @@ class ParamCurv(QtGui.QWidget):
 		except:
 			FreeCAD.Console.PrintError("Error in evaluating the parameters")
 
+		safety_distance = 1e-3
+
 		wires = {}
 		for direction in ["x", "y"]:
 			wires[direction] = []
 			for wire_num in range(wire_count+1):
-				wire = self.draw_wire(wire_diameter, wire_count, mesh_lattice_const)
+				wire = self.draw_wire(wire_diameter, wire_count, mesh_lattice_const, safety_distance=safety_distance)
 
 				# position wire
 				if direction == "x":
 					wire.Placement.Base += FreeCAD.Vector(0, wire_num*mesh_lattice_const, 0)
 					if wire_num%2:
 						wire.Placement.Rotation = FreeCAD.Rotation(FreeCAD.Vector(1,0,0), 180)
+						wire.Placement.Base += FreeCAD.Vector(0, 0, safety_distance/2.)
 				else:
 					wire.Placement.Rotation = FreeCAD.Rotation(FreeCAD.Vector(0,0,1), 90)
-					wire.Placement.Base += FreeCAD.Vector(wire_num*mesh_lattice_const, 0, 0)
+					wire.Placement.Base += FreeCAD.Vector(wire_num*mesh_lattice_const, 0, -safety_distance/2.)
 					if not wire_num%2:
 						wire.Placement.Rotation = wire.Placement.Rotation.multiply(FreeCAD.Rotation(FreeCAD.Vector(1,0,0), 180))
 
 				wires[direction].append(wire)
+
+		mesh = FreeCAD.activeDocument().addObject("Part::MultiFuse","Mesh")
+		mesh.Shapes = wires["x"] + wires["y"]
+		FreeCAD.activeDocument().recompute()
+
+		if self.cb_create_unit.isChecked():
+			unit_cell_bounding_box = FreeCAD.activeDocument().addObject("Part::Box","Unit Cell Bounding Box")
+			unit_cell_bounding_box.Length = mesh_lattice_const*2.
+			unit_cell_bounding_box.Width = mesh_lattice_const*2.
+			unit_cell_bounding_box.Height = mesh_lattice_const*2.
+			unit_cell_bounding_box.Placement.Base = FreeCAD.Vector(mesh_lattice_const, mesh_lattice_const, -mesh_lattice_const)
+
+			unit_cell = FreeCAD.activeDocument().addObject("Part::MultiCommon", "Unit Cell")
+			unit_cell.Shapes = [unit_cell_bounding_box, mesh]
+			mesh.Visibility = False
+
+			FreeCAD.activeDocument().recompute()
+
 		
-	def draw_wire(self, wire_diameter, wire_count, mesh_lattice_const):
+	def draw_wire(self, wire_diameter, wire_count, mesh_lattice_const, safety_distance=0.1e-3):
 		vectors = []
 		num_steps = wire_count*10
-		safety_distance = 1e-3
 		for i in range(int(num_steps)+1):
 			t = float(i)/float(num_steps) * 2*pi * wire_count/2. + pi/2. # to start at max/min
 			vector_x = wire_count * mesh_lattice_const * float(i)/float(num_steps)
