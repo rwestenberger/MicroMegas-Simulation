@@ -7,22 +7,17 @@
 # Version: 04/07/2015
 
 # CONFIGURATION - EDIT THE FOLLOWING LINE TO MATCH YOUR GMSH BINARY
-gmsh_bin = r"C:\Users\novalis\Desktop\gmsh-2.10.1-Windows\gmsh.exe"
+gmsh_bin = r"/localscratch/simulation/installs/gmsh/bin/gmsh"
 # END CONFIGURATION
 
 # START OF MACRO
 from PySide import QtGui, QtCore
-import Fem
-import FemGui
+import Fem, FemGui
+import FreeCAD, FreeCADGui
 import MechanicalAnalysis
-import FreeCAD
-import FreeCADGui
 import ImportGui
 import Mesh
-import subprocess
-import sys
-import tempfile
-import os
+import subprocess, sys, tempfile, os, shutil
 
 
 class MeshGmsh(QtGui.QWidget):
@@ -54,7 +49,7 @@ class MeshGmsh(QtGui.QWidget):
 		# Format:
 		self.l_format = QtGui.QLabel("Format ", self)
 		self.cmb_format = QtGui.QComboBox(self)
-		self.format_list = [self.tr('unv'), self.tr('stl'), self.tr('med')]
+		self.format_list = [self.tr('unv'), self.tr('stl'), self.tr('med'), self.tr('msh')]
 		self.cmb_format.addItems(self.format_list)
 		self.cmb_format.setCurrentIndex(0)
 		self.stored_cmb_format_index = 0
@@ -62,13 +57,13 @@ class MeshGmsh(QtGui.QWidget):
 		self.cb_max_elme_size = QtGui.QCheckBox("  Set maximum mesh element size",self)
 		self.cb_max_elme_size.setChecked(QtCore.Qt.Checked)
 		self.sb_max_element_size = QtGui.QDoubleSpinBox(self)
-		self.sb_max_element_size.setValue(5.0)
+		self.sb_max_element_size.setValue(0.01)
 		self.sb_max_element_size.setMaximum(10000000.0)
 		self.sb_max_element_size.setMinimum(0.00000001)
 		# Element min size:
 		self.cb_min_elme_size = QtGui.QCheckBox("  Set minimum mesh element size",self)
 		self.sb_min_element_size = QtGui.QDoubleSpinBox(self)
-		self.sb_min_element_size.setValue(1.0)
+		self.sb_min_element_size.setValue(0.01)
 		self.sb_min_element_size.setMaximum(10000000.0)
 		self.sb_min_element_size.setMinimum(0.00000001)
 		self.sb_min_element_size.setEnabled(False)
@@ -195,11 +190,20 @@ class MeshGmsh(QtGui.QWidget):
 		FreeCAD.Console.PrintMessage("Running: \"{}\"\n".format(command))
 		try:
 			output = subprocess.check_output([command, '-1'], shell=True, stderr=subprocess.STDOUT,)
-			FreeCAD.Console.PrintMessage("Output: \"{}\"\n".format(output))
+			for line in output.split('\n'):
+				if "Error" in line:
+					FreeCAD.Console.PrintError("{}\n".format(line))
+				elif "Warning" in line:
+					FreeCAD.Console.PrintWarning("{}\n".format(line))
+			#FreeCAD.Console.PrintMessage("Output: \"{}\"\n".format(output))
 			if file_format in ('unv', 'med'):
 				Fem.insert(temp_mesh_file, FreeCAD.ActiveDocument.Name)
 			if file_format == 'stl':
 				Mesh.insert(temp_mesh_file, FreeCAD.ActiveDocument.Name)
+			if file_format == 'msh':
+				out_mesh_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), "mesh.msh")
+				shutil.move(temp_mesh_file, out_mesh_file)
+				FreeCAD.Console.PrintMessage("Output file written to: {}\n".format(out_mesh_file))
 			if self.cb_mec_anal.isChecked():
 				FMesh = App.activeDocument().ActiveObject
 				MechanicalAnalysis.makeMechanicalAnalysis('MechanicalAnalysis')
