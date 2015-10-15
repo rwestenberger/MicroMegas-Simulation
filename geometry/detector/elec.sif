@@ -1,0 +1,112 @@
+Header
+  Mesh DB "." "geometry"
+End
+
+Simulation
+  Max Output Level = 10
+  Coordinate System = Cartesian 3D
+  Simulation Type = Steady
+  Steady State Max Iterations = 1
+End
+
+Constants
+  Permittivity of Vacuum = 8.8542e-12
+End
+
+Body 1
+  Target Bodies(1) = 1
+  Name = "Gas"
+  Equation = 1
+  Material = 1
+End
+
+Equation 1
+  Name = "Equation 1"
+  Active Solvers(1) = 1
+End
+
+Solver 1
+  Equation = Elec Solver
+  Procedure = "StatElecSolve" "StatElecSolver"
+  Variable = Potential
+  Variable DOFs = 1
+
+  Linear System Solver = Iterative
+  Linear System Iterative Method = BiCGStab
+  Linear System Preconditioning = ILU1
+  Linear System Max Iterations = 500
+  Linear System Convergence Tolerance = 1.0e-10
+End
+
+Solver 2
+  Equation = Electric Force
+  Procedure = "ElectricForce" "StatElecForce"
+
+  Exec Solver = After all
+  exec interval = 1
+  Equation = "ResultOutput"
+  Procedure = "ResultOutputSolve" "ResultOutputSolver"
+  Output File Name = "elec."
+  Output Format = "VTU"
+  Vtu Format = Logical TRUE
+  Scalar Field 1 = Potential
+End
+
+Material 1
+  Relative Permittivity = 1.0
+End
+
+
+! Voltages applied
+Boundary Condition 1
+  Target Boundaries(1) = 14
+  Potential = -16
+  Name = "Upper"
+End
+
+Boundary Condition 2
+  Target Boundaries(6) = 3 6 8 10 12 16 
+  Potential = 0
+  Name = "Mesh"
+End
+
+Boundary Condition 3
+  Target Boundaries(1) = 5 
+  Name = "Readout"
+  Potential = 324
+End
+
+! Periodicity
+Boundary Condition 4
+  Target Boundaries(1) = 13
+End
+Boundary Condition 5
+  Target Boundaries(1) = 15
+  Name = "UpperFrontToBack"
+  Periodic BC = 4
+End
+
+Boundary Condition 6
+  Target Boundaries(1) = 2
+End
+Boundary Condition 7
+  Target Boundaries(1) = 4
+  Name = "LowerFrontToBack"
+  Periodic BC = 6
+End
+
+Boundary Condition 8
+  Target Boundaries(1) = 9
+End
+Boundary Condition 9
+  Target Boundaries(1) = 11
+  Name = "UpperLeftToRight"
+End
+
+Boundary Condition 10
+  Target Boundaries(1) = 1
+End
+Boundary Condition 11
+  Target Boundaries(1) = 7
+  Name = "LowerLeftToRight"
+End
