@@ -3,11 +3,12 @@ Header
 End
 
 Simulation
-  Max Output Level = 10
+  Max Output Level = 100
   Coordinate System = Cartesian 3D
   Simulation Type = Steady
   Steady State Max Iterations = 1
   Output File = "field.result"
+  Coordinate Scaling = 0.001
 End
 
 Constants
@@ -29,7 +30,7 @@ Solver 1
   Linear System Solver = Iterative
   Linear System Iterative Method = BiCGStab
   Linear System Preconditioning = ILU1
-  Linear System Max Iterations = 500
+  Linear System Max Iterations = 1000
   Linear System Convergence Tolerance = 1.0e-10
 End
 
