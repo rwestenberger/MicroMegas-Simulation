@@ -7,18 +7,13 @@ Simulation
   Coordinate System = Cartesian 3D
   Simulation Type = Steady
   Steady State Max Iterations = 1
+  Output File = "field_weight.result"
 End
 
 Constants
   Permittivity of Vacuum = 8.8542e-12
 End
 
-Body 1
-  Target Bodies(1) = 1
-  Name = "Gas"
-  Equation = 1
-  Material = 1
-End
 
 Equation 1
   Name = "Equation 1"
@@ -46,37 +41,50 @@ Solver 2
   exec interval = 1
   Equation = "ResultOutput"
   Procedure = "ResultOutputSolve" "ResultOutputSolver"
-  Output File Name = "elec."
+  Output File Name = "elec_weight."
   Output Format = "VTU"
   Vtu Format = Logical TRUE
   Scalar Field 1 = Potential
 End
 
+
+!! Material setup
 Material 1
   Relative Permittivity = 1.0
 End
 
+Body 1
+  Target Bodies(1) = 1
+  Name = "Gas"
+  Equation = 1
+  Material = 1
+End
 
-! Voltages applied
+
+!! Voltages applied
+! Upper end
 Boundary Condition 1
   Target Boundaries(1) = 14
-  Potential = -16
+  Potential = 0
   Name = "Upper"
 End
 
+! Mesh
 Boundary Condition 2
   Target Boundaries(6) = 3 6 8 10 12 16 
-  Potential = 0
+  Potential = 0.5
   Name = "Mesh"
 End
 
+! Readout
 Boundary Condition 3
   Target Boundaries(1) = 5 
   Name = "Readout"
-  Potential = 324
+  Potential = 1
 End
 
-! Periodicity
+
+!! Periodicity
 Boundary Condition 4
   Target Boundaries(1) = 13
 End

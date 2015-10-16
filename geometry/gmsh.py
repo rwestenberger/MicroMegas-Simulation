@@ -205,7 +205,7 @@ class MeshGmsh(QtGui.QWidget):
 			if file_format == 'stl':
 				Mesh.insert(temp_mesh_file, FreeCAD.ActiveDocument.Name)
 			if file_format == 'msh':
-				out_mesh_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), "mesh.msh")
+				out_mesh_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), "geometry.msh")
 				shutil.move(temp_mesh_file, out_mesh_file)
 				FreeCAD.Console.PrintMessage("Output file written to: {}\n".format(out_mesh_file))
 			if self.cb_mec_anal.isChecked():

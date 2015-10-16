@@ -11,14 +11,14 @@ CFLAGS = -Wall -Wextra -Wno-long-long \
 	-I$(INCDIR) -I$(HEEDDIR)
 
 # Debug flags
-# CFLAGS += -g
+CFLAGS += -g
 
 LDFLAGS = `root-config --glibs` -lGeom -lgfortran -lm
 LDFLAGS += -L$(LIBDIR) -lGarfield
-# LDFLAGS += -g
+LDFLAGS += -g
 
-avalanche: avalanche.cc 
-	$(CXX) $(CFLAGS) avalanche.cc
-	$(CXX) -o avalanche avalanche.o $(LDFLAGS)
-	rm avalanche.o
+simulation: simulation.cpp
+	$(CXX) $(CFLAGS) simulation.cpp
+	$(CXX) -o simulation simulation.o $(LDFLAGS)
+	rm simulation.o
 
