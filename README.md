@@ -1,21 +1,19 @@
 # MicroMegas-Simulation
-Dependencies: ROOT, Garfield++, Elmer, gmsh
+Dependencies: FreeCAD, Elmer, Garfield++, ROOT
 
 ## Build procedure
 Assuming you are in the project root directory:
 
-1. Generate .mesh from .geo file:
+1. Export FreeCAD model to .step file.
 
-	`gmsh geometry/elementaryCell.geo -3 -order 2`
-2. Convert .mesh for Elmer:
+2. Import .step file to ElmerGUI with nglib.
 
-	`ElmerGrid 14 2 geometry/elementaryCell.msh -autoclean`
 3. Call ElmerSolver to generate electric field and weighting field:
 
-	`ElmerSolver geometry/elementaryCell.sif && ElmerSolver geometry/elementaryCell_weight.sif`
+	`ElmerSolver calculate_field.sif && ElmerSolver calculate_field_weight.sif`
 4. Build Garfield++ executable: 
 
 	`make`
 5. Run simulation:
 
-	`./avalanche`
+	`./simulation`
