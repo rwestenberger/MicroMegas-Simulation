@@ -66,7 +66,7 @@ End
 ! Upper end
 Boundary Condition 1
   Target Boundaries(1) = 14
-  Potential = -50
+  Potential = -30
   Name = "Upper"
 End
 
@@ -81,7 +81,7 @@ End
 Boundary Condition 3
   Target Boundaries(1) = 5 
   Name = "Readout"
-  Potential = 500
+  Potential = 1000
 End
 
 
