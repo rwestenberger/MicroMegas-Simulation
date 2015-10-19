@@ -71,11 +71,11 @@ Boundary Condition 1
 End
 
 ! Mesh
-Boundary Condition 2
-  Target Boundaries(6) = 3 6 8 10 12 16 
-  Potential = 0.5
-  Name = "Mesh"
-End
+!Boundary Condition 2
+!  Target Boundaries(6) = 3 6 8 10 12 16 
+!  Potential = 0.5
+!  Name = "Mesh"
+!End
 
 ! Readout
 Boundary Condition 3
