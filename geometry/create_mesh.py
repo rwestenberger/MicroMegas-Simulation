@@ -43,6 +43,13 @@ class MeshGenerator(QtGui.QWidget):
 		self.sb_space_below_mesh.setSingleStep(1.)
 		self.sb_space_below_mesh.setValue(150.)
 
+		self.label_safety_distance = QtGui.QLabel(u"Safety distance between wires (µm) ", self)
+		self.sb_safety_distance = QtGui.QDoubleSpinBox(self)
+		self.sb_safety_distance.setMaximum(1000.)
+		self.sb_safety_distance.setMinimum(0.)
+		self.sb_safety_distance.setSingleStep(0.1)
+		self.sb_safety_distance.setValue(1.)
+
 		# Ok and cancel buttons
 		self.button_create = QtGui.QPushButton("Create Mesh", self)
 		self.button_exit = QtGui.QPushButton("Close", self)
@@ -57,8 +64,10 @@ class MeshGenerator(QtGui.QWidget):
 		layout.addWidget(self.sb_space_above_mesh, 2, 1)
 		layout.addWidget(self.label_space_below_mesh, 3, 0)
 		layout.addWidget(self.sb_space_below_mesh, 3, 1)
-		layout.addWidget(self.button_create, 4, 0)
-		layout.addWidget(self.button_exit, 4, 1)
+		layout.addWidget(self.label_safety_distance, 4, 0)
+		layout.addWidget(self.sb_safety_distance, 4, 1)
+		layout.addWidget(self.button_create, 5, 0)
+		layout.addWidget(self.button_exit, 5, 1)
 		self.setLayout(layout)
 		# Connectors
 		QtCore.QObject.connect(self.button_create, QtCore.SIGNAL("pressed()"),self.generate_unit_cell)
@@ -71,10 +80,9 @@ class MeshGenerator(QtGui.QWidget):
 			wire_diameter = float(self.sb_wire_diameter.text())*1e-3
 			space_above_mesh = float(self.sb_space_above_mesh.text())*1e-3
 			space_below_mesh = float(self.sb_space_below_mesh.text())*1e-3
+			safety_distance = float(self.sb_safety_distance.text())*1e-3 # to prevent overlap of wires, which can cause trouble in later union or common operations and some other glitches
 		except:
 			FreeCAD.Console.PrintError("Error in evaluating the parameters")
-
-		safety_distance = 1e-3 # to prevent overlap of wires, which can cause trouble in later union or common operations
 
 		wires = {}
 		for direction in ["x", "y"]:
