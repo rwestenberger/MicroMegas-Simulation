@@ -37,7 +37,7 @@ int main(int argc, char * argv[]) {
 		"geometry/geometry/mesh.header",
 		"geometry/geometry/mesh.elements",
 		"geometry/geometry/mesh.nodes",
-		"geometry/geometry/dielectrics.dat",
+		"geometry/dielectrics.dat",
 		"geometry/geometry/field.result",
 		"mm"
 	);
@@ -63,6 +63,7 @@ int main(int argc, char * argv[]) {
 	  }
 	}
 
+	/*
 	// Add sensor
     Sensor* sensor = new Sensor();
     sensor->AddComponent(fm);
@@ -116,6 +117,7 @@ int main(int argc, char * argv[]) {
 	//viewfemesh->SetYaxisTitle("z (mm)");fin
 	viewfield->PlotContour("potential");
 	viewfemesh->Plot();
+	*/
 
 	app.Run(kTRUE);
 
