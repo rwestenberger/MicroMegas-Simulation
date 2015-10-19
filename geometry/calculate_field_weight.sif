@@ -7,7 +7,7 @@ Simulation
   Coordinate System = Cartesian 3D
   Simulation Type = Steady
   Steady State Max Iterations = 1
-  Output File = "field.result"
+  Output File = "field_weight.result"
   Coordinate Scaling = 0.001
 End
 
@@ -42,7 +42,7 @@ Solver 2
   exec interval = 1
   Equation = "ResultOutput"
   Procedure = "ResultOutputSolve" "ResultOutputSolver"
-  Output File Name = "elec."
+  Output File Name = "elec_weight."
   Output Format = "VTU"
   Vtu Format = Logical TRUE
   Scalar Field 1 = Potential
@@ -66,14 +66,14 @@ End
 ! Upper end
 Boundary Condition 1
   Target Boundaries(1) = 14
-  Potential = -50
+  Potential = 0
   Name = "Upper"
 End
 
 ! Mesh
 Boundary Condition 2
   Target Boundaries(6) = 3 6 8 10 12 16 
-  Potential = 0
+  Potential = 0.5
   Name = "Mesh"
 End
 
@@ -81,41 +81,44 @@ End
 Boundary Condition 3
   Target Boundaries(1) = 5 
   Name = "Readout"
-  Potential = 500
+  Potential = 1
 End
 
 
 !! Periodicity
+
+! Upper Front to Back
 Boundary Condition 4
   Target Boundaries(1) = 13
 End
 Boundary Condition 5
   Target Boundaries(1) = 15
-  Name = "UpperFrontToBack"
   Periodic BC = 4
 End
 
+! Lower Front to Back
 Boundary Condition 6
   Target Boundaries(1) = 2
 End
 Boundary Condition 7
   Target Boundaries(1) = 4
-  Name = "LowerFrontToBack"
   Periodic BC = 6
 End
 
+! Upper Left to Right
 Boundary Condition 8
-  Target Boundaries(1) = 9
+  Target Boundaries(1) = 11
 End
 Boundary Condition 9
-  Target Boundaries(1) = 11
-  Name = "UpperLeftToRight"
+  Target Boundaries(1) = 9
+  Periodic BC = 8
 End
 
+! Lower Left to Right
 Boundary Condition 10
   Target Boundaries(1) = 1
 End
 Boundary Condition 11
   Target Boundaries(1) = 7
-  Name = "LowerLeftToRight"
+  Periodic BC = 10
 End
