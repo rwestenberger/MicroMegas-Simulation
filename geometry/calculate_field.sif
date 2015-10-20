@@ -66,7 +66,7 @@ End
 ! Upper end
 Boundary Condition 1
   Target Boundaries(1) = 14
-  Potential = -30
+  Potential = -30 ! -30 for about 1kV/cm
   Name = "Upper"
 End
 
@@ -81,7 +81,7 @@ End
 Boundary Condition 3
   Target Boundaries(1) = 5 
   Name = "Readout"
-  Potential = 1000
+  Potential = 600 ! 600 for about 40kV/cm
 End
 
 
