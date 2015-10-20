@@ -2,14 +2,21 @@
 #include <cmath> 
 #include <cstring>
 #include <fstream>
+
 #include <TCanvas.h>
 #include <TApplication.h>
 #include <TFile.h>
+#include <TH1F.h>
+#include <TH2F.h>
+#include <TRandom3.h>
+#include <TVector3.h>
+#include <TMath.h>
 
 #include "MediumMagboltz.hh"
 #include "ComponentElmer.hh"
 #include "Sensor.hh"
 #include "ViewField.hh"
+#include "ViewCell.hh"
 #include "Plotting.hh"
 #include "ViewFEMesh.hh"
 #include "ViewSignal.hh"
@@ -17,20 +24,107 @@
 #include "Random.hh"
 #include "AvalancheMicroscopic.hh"
 
+#include "Avalanche.hh"
+
 using namespace Garfield;
+
+Avalanche* avalancheElectron(AvalancheMicroscopic* avalanchem, Avalanche* aval, TVector3 direction) {
+	avalanchem->AvalancheElectron(aval->initialPosition.x(), aval->initialPosition.y(), aval->initialPosition.z(), aval->initialTime, aval->initialEnergy, direction.x(), direction.y(), direction.z());
+
+	int ne, ni;
+	avalanchem->GetAvalancheSize(ne, ni);
+	int np = avalanchem->GetNumberOfElectronEndpoints();
+	//std::cout << "Avalanche: " << ne << " e-, " << ni << " ions" << std::endl;
+	//std::cout << "   e- endpoints: " << np << std::endl;
+
+	double x1, y1, z1, t1;
+	// Final position and time
+	double x2, y2, z2, t2;
+	// Initial and final energy
+	double e1, e2;
+	// Flag indicating why the tracking of an electron was stopped.
+	int status;
+	for (int i=0; i<np; i++) {
+		avalanchem->GetElectronEndpoint(i, x1, y1, z1, t1, e1, x2, y2, z2, t2, e2, status);
+		//std::cout << status << ": (" << x1 << ", " << y1 << ", " << z1 << ") " << e1 << " eV -> (" << x2 << ", " << y2 << ", " << z2 << ") " << e2 << " eV" << std::endl;
+	}
+
+	aval->initialEnergy = e1; // 0 energy is set to 1e-20 by garfield
+	aval->finalPosition = TVector3(x2, y2, z2);
+	aval->finalEnergy = e2;
+	aval->finalTime = t2;
+	aval->status = status;
+
+	return aval;
+}
+
+TFile* outFile;
+TH1F *histEndpointZ, *histAvalancheStatus, *histHorizontalDriftDistance, *histEnergyGain, *histDriftTime;
+TH2F *histHits;
+
+void initPlots() {
+	outFile = new TFile("simulation.root", "RECREATE");
+
+	histEndpointZ = new TH1F("endpointZ", "Final z", 100, -0.2, 0.15);
+	histEndpointZ->SetXTitle("z_{final} [cm]");
+
+	histAvalancheStatus = new TH1F("avalancheStatus", "Avalanche Status", 16, -16.5, -0.5);
+
+	histHorizontalDriftDistance = new TH1F("horizontalDriftDistance", "Horizontal drift distance", 100, 0., 0.1);
+	histHorizontalDriftDistance->SetXTitle("xy-drift distance [cm]");
+
+	histEnergyGain = new TH1F("energyGain", "Energy gain", 100, 0., 20.);
+	histEnergyGain->SetXTitle("energy gain [eV]");
+
+	histDriftTime = new TH1F("driftTime", "Drift time", 100, 0., 100.);
+	histDriftTime->SetXTitle("drift time [ns]");
+
+	histHits = new TH2F("hits", "Hits", 100, -.125, .125, 100, -.125, .125);
+	histHits->SetXTitle("x [cm]");
+	histHits->SetXTitle("y [cm]");
+}
+
+void fillPlots(Avalanche* aval) {
+	histEndpointZ->Fill(aval->finalPosition.z());
+	histEnergyGain->Fill(aval->finalEnergy - aval->initialEnergy);
+	histAvalancheStatus->Fill(aval->status);
+	if (aval->finalPosition.z() < -0.16) { // hit readout plate
+		histHorizontalDriftDistance->Fill(
+			TMath::Sqrt((aval->finalPosition.x() - aval->initialPosition.x())*(aval->finalPosition.x() - aval->initialPosition.x()) + (aval->finalPosition.y() - aval->initialPosition.y())*(aval->finalPosition.y() - aval->initialPosition.y()))
+		);
+		histHits->Fill(aval->finalPosition.x(), aval->finalPosition.y());
+	}
+	histDriftTime->Fill(aval->finalTime - aval->initialTime);
+}
+
+void savePlots() {
+	histEndpointZ->Write();
+	histAvalancheStatus->Write();
+	histHorizontalDriftDistance->Write();
+	histEnergyGain->Write();
+	histDriftTime->Write();
+	histHits->Write();
+
+	outFile->Close();
+}
 
 int main(int argc, char * argv[]) {
 	TApplication app("app", &argc, argv);
 
-	TCanvas * c1 = new TCanvas("geom", "Geometry/Fields");
-
 	// units cm
-	double areaXmin = -0.00625, areaXmax = 0.00625;
-	double areaYmin = -0.015, areaYmax = 0.015;
-	double areaZmin = -0.011, areaZmax = 0.019;
+	const double lattice_const = 0.0625;
+	double areaXmin = -lattice_const*2., areaXmax = -areaXmin;
+	double areaYmin = -lattice_const*2., areaYmax = -areaYmin;
+	double areaZmin = -0.178, areaZmax = 0.328;
+	double aspectRatio = (areaXmax-areaXmin) / (areaZmax-areaZmin);
 
-	double tEnd = 10.;
-	int nsBins = 100;
+	TCanvas * c1 = new TCanvas("geom", "Geometry/Fields", 1000, (int)(1000./aspectRatio));
+	TRandom3* rand = new TRandom3(42);
+
+	initPlots();
+
+	//double tEnd = 10.;
+	//int nsBins = 100;
 
 	// Import an Elmer-created LEM and the weighting field for the readout electrode
 	ComponentElmer* fm = new ComponentElmer(
@@ -39,7 +133,7 @@ int main(int argc, char * argv[]) {
 		"geometry/geometry/mesh.nodes",
 		"geometry/dielectrics.dat",
 		"geometry/geometry/field.result",
-		"mm"
+		"cm"
 	);
 	fm->EnablePeriodicityX();
 	fm->EnablePeriodicityY();
@@ -63,7 +157,6 @@ int main(int argc, char * argv[]) {
 	  }
 	}
 
-	/*
 	// Add sensor
     Sensor* sensor = new Sensor();
     sensor->AddComponent(fm);
@@ -75,15 +168,15 @@ int main(int argc, char * argv[]) {
 	ViewField* viewfield = new ViewField();
     viewfield->SetSensor(sensor);
     viewfield->SetCanvas(c1);
-	viewfield->SetArea(areaXmin, areaYmin, areaXmax, areaYmax);
-	viewfield->SetNumberOfContours(10);
-	viewfield->SetNumberOfSamples2d(50, 64);
+	viewfield->SetArea(areaXmin, areaZmin, areaXmax, areaZmax);
+	viewfield->SetNumberOfContours(50);
+	viewfield->SetNumberOfSamples2d(50, 100);
 	viewfield->SetPlane(0, -1, 0, 0, 0, 0);
 
     AvalancheMicroscopic* avalanchemicroscopic = new AvalancheMicroscopic();
     avalanchemicroscopic->SetSensor(sensor);
-    avalanchemicroscopic->SetCollisionSteps(100);
-    avalanchemicroscopic->EnableSignalCalculation();
+    avalanchemicroscopic->SetCollisionSteps(20);
+    //avalanchemicroscopic->EnableSignalCalculation();
 
     ViewDrift* viewdrift = new ViewDrift();
     viewdrift->SetArea(areaXmin, areaYmin, areaZmin, areaXmax, areaYmax, areaZmax);
@@ -94,32 +187,44 @@ int main(int argc, char * argv[]) {
 	viewfemesh->SetCanvas(c1);
 	viewfemesh->SetComponent(fm);
 	viewfemesh->SetPlane(0, -1, 0, 0, 0, 0);
-	viewfemesh->SetViewDrift(viewdrift);
 	viewfemesh->SetFillMesh(true);
-	viewfemesh->SetColor(1, kRed);
-	viewfemesh->SetFillColor(1, kRed);
-	viewfemesh->SetArea(areaXmin, areaYmin, areaZmin, areaXmax, areaYmax, areaZmax);
+    viewfemesh->SetColor(0,kAzure+6);
+    viewfemesh->SetColor(1,kGray);
+    viewfemesh->SetColor(2,kYellow+3);
+	viewfemesh->SetViewDrift(viewdrift);
+	viewfemesh->SetArea(areaXmin, -lattice_const, areaZmin, areaXmax, lattice_const, areaZmax);
 
-	// Set the initial position [cm] and starting time [ns]
-	double x0 = 0.0, y0 = 0.0, z0 = 0.0;
-	double t0 = 0.0;
-	// Set the initial energy [eV]
-	double e0 = 0.1;
-	// Set the initial direction (x, y, z)
-	// In case of a null vector, the direction is randomized
-	double dx0 = 0., dy0 = 0., dz0 = 0.;
-	// Calculate an electron avalanche
-	avalanchemicroscopic->AvalancheElectron(x0, y0, z0, t0, e0, dx0, dy0, dz0);
+	const int nAvalanches = 50000;
+	for (int i=0; i<nAvalanches; i++) {
+		// Set the initial position [cm], direction, starting time [ns] and initial energy [eV]
+		TVector3 start = TVector3((2.*rand->Rndm() - 1.) * lattice_const, (2.*rand->Rndm() - 1.) * lattice_const, 0.05);
+		TVector3 direction = TVector3(0., 0., -1.);
+		double t0 = 0.0;
+		double e0 = 1.0;
 
-	//viewfemesh->EnableAxes();             // comment this to disable creation of independent axes when contours are plotted
-	//viewfemesh->SetViewDrift(viewDriftA);  // comment this to remove the avalanche drift line from the plot when contours are plotted
-	//viewfemesh->SetXaxisTitle("x (mm)");
-	//viewfemesh->SetYaxisTitle("z (mm)");fin
-	viewfield->PlotContour("potential");
+		std::cout << i+1 << " / " << nAvalanches << std::endl;
+		Avalanche* aval = new Avalanche(start, e0, t0);
+		aval = avalancheElectron(avalanchemicroscopic, aval, direction);
+
+		fillPlots(aval);
+	}
+
+	//viewfield->PlotContour("potential");
+	//viewfemesh->Plot();
+	//viewdrift->Plot();
+
+	/*
+	viewfemesh->EnableAxes();
+	viewfemesh->SetXaxisTitle("x (cm)");
+	viewfemesh->SetYaxisTitle("z (cm)");
 	viewfemesh->Plot();
+	c1->SaveAs("avalanche.pdf");
 	*/
 
-	app.Run(kTRUE);
+	std::cout << "Transparency: " << histHits->GetEntries()/(double)nAvalanches * 100. << "%" << std::endl;
 
+	savePlots();
+
+	app.Run(kFALSE);
 	return 0;
 }
