@@ -1,7 +1,6 @@
+#include <sstream>
 #include <iostream>
-#include <cmath> 
-#include <cstring>
-#include <fstream>
+#include <iomanip>
 
 #include <TCanvas.h>
 #include <TApplication.h>
@@ -24,18 +23,18 @@
 #include "Random.hh"
 #include "AvalancheMicroscopic.hh"
 
-#include "Avalanche.hh"
-
 using namespace Garfield;
 
-Avalanche* avalancheElectron(AvalancheMicroscopic* avalanchem, Avalanche* aval, TVector3 direction) {
-	avalanchem->AvalancheElectron(aval->initialPosition.x(), aval->initialPosition.y(), aval->initialPosition.z(), aval->initialTime, aval->initialEnergy, direction.x(), direction.y(), direction.z());
+TFile* outFile;
+TH1F *histEndpointZ, *histAvalancheStatus, *histHorizontalDriftDistance, *histEnergyGain, *histDriftTime, *histNumberOfElectronEndpoints, *histAvalancheSize;
+TH2F *histHits;
+
+bool avalancheElectron(AvalancheMicroscopic* avalanchem, TVector3 initialPosition, double initialTime, double initialEnergy, TVector3 direction) {
+	avalanchem->AvalancheElectron(initialPosition.x(), initialPosition.y(), initialPosition.z(), initialTime, initialEnergy, direction.x(), direction.y(), direction.z());
 
 	int ne, ni;
 	avalanchem->GetAvalancheSize(ne, ni);
-	int np = avalanchem->GetNumberOfElectronEndpoints();
 	//std::cout << "Avalanche: " << ne << " e-, " << ni << " ions" << std::endl;
-	//std::cout << "   e- endpoints: " << np << std::endl;
 
 	double x1, y1, z1, t1;
 	// Final position and time
@@ -44,28 +43,34 @@ Avalanche* avalancheElectron(AvalancheMicroscopic* avalanchem, Avalanche* aval, 
 	double e1, e2;
 	// Flag indicating why the tracking of an electron was stopped.
 	int status;
+
+	int np = avalanchem->GetNumberOfElectronEndpoints();
+	//std::cout << "   e- endpoints: " << np << std::endl;
 	for (int i=0; i<np; i++) {
 		avalanchem->GetElectronEndpoint(i, x1, y1, z1, t1, e1, x2, y2, z2, t2, e2, status);
 		//std::cout << status << ": (" << x1 << ", " << y1 << ", " << z1 << ") " << e1 << " eV -> (" << x2 << ", " << y2 << ", " << z2 << ") " << e2 << " eV" << std::endl;
+		if (z2 < -0.16) { // hit readout plate
+			histHorizontalDriftDistance->Fill(TMath::Sqrt((x2-x1)*(x2-x1) + (y2-y1)*(y2-y1)));
+			histHits->Fill(x2, y2);
+		}
+
+		histEndpointZ->Fill(z2);
+		histEnergyGain->Fill(e2 - e1);
+		histAvalancheStatus->Fill(status);
+		histDriftTime->Fill(t2 - t1);
 	}
 
-	aval->initialEnergy = e1; // 0 energy is set to 1e-20 by garfield
-	aval->finalPosition = TVector3(x2, y2, z2);
-	aval->finalEnergy = e2;
-	aval->finalTime = t2;
-	aval->status = status;
+	histNumberOfElectronEndpoints->Fill(np);
+	histAvalancheSize->Fill(ne);
 
-	return aval;
+	if (z2 < -0.017) return true; // avalanche passed, cut value from endpointZ plot
+	return false;
 }
-
-TFile* outFile;
-TH1F *histEndpointZ, *histAvalancheStatus, *histHorizontalDriftDistance, *histEnergyGain, *histDriftTime;
-TH2F *histHits;
 
 void initPlots() {
 	outFile = new TFile("simulation.root", "RECREATE");
 
-	histEndpointZ = new TH1F("endpointZ", "Final z", 100, -0.2, 0.15);
+	histEndpointZ = new TH1F("endpointZ", "Final z", 100, -0.2, 0.1);
 	histEndpointZ->SetXTitle("z_{final} [cm]");
 
 	histAvalancheStatus = new TH1F("avalancheStatus", "Avalanche Status", 16, -16.5, -0.5);
@@ -76,25 +81,18 @@ void initPlots() {
 	histEnergyGain = new TH1F("energyGain", "Energy gain", 100, 0., 20.);
 	histEnergyGain->SetXTitle("energy gain [eV]");
 
-	histDriftTime = new TH1F("driftTime", "Drift time", 100, 0., 100.);
+	histDriftTime = new TH1F("driftTime", "Drift time", 500, 0., 500.);
 	histDriftTime->SetXTitle("drift time [ns]");
 
 	histHits = new TH2F("hits", "Hits", 100, -.125, .125, 100, -.125, .125);
 	histHits->SetXTitle("x [cm]");
 	histHits->SetXTitle("y [cm]");
-}
 
-void fillPlots(Avalanche* aval) {
-	histEndpointZ->Fill(aval->finalPosition.z());
-	histEnergyGain->Fill(aval->finalEnergy - aval->initialEnergy);
-	histAvalancheStatus->Fill(aval->status);
-	if (aval->finalPosition.z() < -0.16) { // hit readout plate
-		histHorizontalDriftDistance->Fill(
-			TMath::Sqrt((aval->finalPosition.x() - aval->initialPosition.x())*(aval->finalPosition.x() - aval->initialPosition.x()) + (aval->finalPosition.y() - aval->initialPosition.y())*(aval->finalPosition.y() - aval->initialPosition.y()))
-		);
-		histHits->Fill(aval->finalPosition.x(), aval->finalPosition.y());
-	}
-	histDriftTime->Fill(aval->finalTime - aval->initialTime);
+	histNumberOfElectronEndpoints = new TH1F("numberOfElectronEndpoints", "Number of electron endpoints", 11, -0.5, 10.5);
+	histNumberOfElectronEndpoints->SetXTitle("#endpoints");
+
+	histAvalancheSize = new TH1F("avalancheSize", "Avalanche Size", 11, -0.5, 10.5);
+	histAvalancheSize->SetXTitle("#e^{-}");
 }
 
 void savePlots() {
@@ -104,12 +102,16 @@ void savePlots() {
 	histEnergyGain->Write();
 	histDriftTime->Write();
 	histHits->Write();
+	histNumberOfElectronEndpoints->Write();
+	histAvalancheSize->Write();
 
 	outFile->Close();
 }
 
 int main(int argc, char * argv[]) {
 	TApplication app("app", &argc, argv);
+
+	const bool visualization = true;
 
 	// units cm
 	const double lattice_const = 0.0625;
@@ -118,7 +120,8 @@ int main(int argc, char * argv[]) {
 	double areaZmin = -0.178, areaZmax = 0.328;
 	double aspectRatio = (areaXmax-areaXmin) / (areaZmax-areaZmin);
 
-	TCanvas * c1 = new TCanvas("geom", "Geometry/Fields", 1000, (int)(1000./aspectRatio));
+	//TCanvas * c1 = new TCanvas("geom", "Geometry/Fields", 1000, (int)(1000./aspectRatio));
+	TCanvas * c1 = new TCanvas("geom", "Geometry/Fields");
 	TRandom3* rand = new TRandom3(42);
 
 	initPlots();
@@ -137,7 +140,7 @@ int main(int argc, char * argv[]) {
 	);
 	fm->EnablePeriodicityX();
 	fm->EnablePeriodicityY();
-	fm->SetWeightingField("geometry/geometry/field_weight.result", "wtlel");
+	fm->SetWeightingField("geometry/geometry/field_weight.result", "readout");
 	fm->PrintRange();
 
 	// Define the medium
@@ -157,71 +160,79 @@ int main(int argc, char * argv[]) {
 	  }
 	}
 
-	// Add sensor
     Sensor* sensor = new Sensor();
     sensor->AddComponent(fm);
     sensor->SetArea(areaXmin, areaYmin, areaZmin, areaXmax, areaYmax, areaZmax);
-    //sensor->AddElectrode(fm, "wtlel");
+    //sensor->AddElectrode(fm, "readout");
     //sensor->SetTimeWindow(0., tEnd/nsBins,nsBins);
-
-	// Set up the object for field visualization
-	ViewField* viewfield = new ViewField();
-    viewfield->SetSensor(sensor);
-    viewfield->SetCanvas(c1);
-	viewfield->SetArea(areaXmin, areaZmin, areaXmax, areaZmax);
-	viewfield->SetNumberOfContours(50);
-	viewfield->SetNumberOfSamples2d(50, 100);
-	viewfield->SetPlane(0, -1, 0, 0, 0, 0);
 
     AvalancheMicroscopic* avalanchemicroscopic = new AvalancheMicroscopic();
     avalanchemicroscopic->SetSensor(sensor);
     avalanchemicroscopic->SetCollisionSteps(20);
+    avalanchemicroscopic->EnableAvalancheSizeLimit(100);
     //avalanchemicroscopic->EnableSignalCalculation();
 
-    ViewDrift* viewdrift = new ViewDrift();
-    viewdrift->SetArea(areaXmin, areaYmin, areaZmin, areaXmax, areaYmax, areaZmax);
-    avalanchemicroscopic->EnablePlotting(viewdrift);
+    ViewField* viewfield;
+    ViewDrift* viewdrift;
+    ViewFEMesh* viewfemesh;
 
-	// Set up the object for FE mesh visualization
-	ViewFEMesh * viewfemesh = new ViewFEMesh();
-	viewfemesh->SetCanvas(c1);
-	viewfemesh->SetComponent(fm);
-	viewfemesh->SetPlane(0, -1, 0, 0, 0, 0);
-	viewfemesh->SetFillMesh(true);
-    viewfemesh->SetColor(0,kAzure+6);
-    viewfemesh->SetColor(1,kGray);
-    viewfemesh->SetColor(2,kYellow+3);
-	viewfemesh->SetViewDrift(viewdrift);
-	viewfemesh->SetArea(areaXmin, -lattice_const, areaZmin, areaXmax, lattice_const, areaZmax);
+    if (visualization) {
+		// field visualization
+		viewfield = new ViewField();
+	    viewfield->SetSensor(sensor);
+	    viewfield->SetCanvas(c1);
+		viewfield->SetArea(areaXmin, areaZmin, areaXmax, areaZmax);
+		viewfield->SetNumberOfContours(50);
+		viewfield->SetNumberOfSamples2d(50, 100);
+		viewfield->SetPlane(0, -1, 0, 0, 0, 0);
 
-	const int nAvalanches = 50000;
+		// drift visualization
+	    viewdrift = new ViewDrift();
+	    viewdrift->SetArea(areaXmin, areaYmin, areaZmin, areaXmax, areaYmax, areaZmax);
+	    avalanchemicroscopic->EnablePlotting(viewdrift);
+
+		// FE mesh visualization
+		viewfemesh = new ViewFEMesh();
+		viewfemesh->SetCanvas(c1);
+		viewfemesh->SetComponent(fm);
+		viewfemesh->SetPlane(0, -1, 0, 0, 0, 0);
+		viewfemesh->SetFillMesh(true);
+	    viewfemesh->SetColor(0,kAzure+6);
+	    viewfemesh->SetColor(1,kGray);
+	    viewfemesh->SetColor(2,kYellow+3);
+		viewfemesh->SetViewDrift(viewdrift);
+		viewfemesh->SetArea(areaXmin, -lattice_const, areaZmin, areaXmax, lattice_const, areaZmax);
+	}
+
+	// actual simulation
+	const int nAvalanches = 1;
+	int avalanchesPassed = 0;
 	for (int i=0; i<nAvalanches; i++) {
 		// Set the initial position [cm], direction, starting time [ns] and initial energy [eV]
-		TVector3 start = TVector3((2.*rand->Rndm() - 1.) * lattice_const, (2.*rand->Rndm() - 1.) * lattice_const, 0.05);
+		TVector3 start = TVector3((2.*rand->Rndm() - 1.) * lattice_const, (2.*rand->Rndm() - 1.) * lattice_const, 0.1);
 		TVector3 direction = TVector3(0., 0., -1.);
 		double t0 = 0.0;
 		double e0 = 1.0;
 
-		std::cout << i+1 << " / " << nAvalanches << std::endl;
-		Avalanche* aval = new Avalanche(start, e0, t0);
-		aval = avalancheElectron(avalanchemicroscopic, aval, direction);
+		std::cout << '\r' << std::setw(4) << i/(double)nAvalanches*100. << "%"; std::flush(std::cout);
+		bool passed = avalancheElectron(avalanchemicroscopic, start, t0, e0, direction);
+		if (passed) avalanchesPassed++;
+	}
+	std::cout << std::endl;
 
-		fillPlots(aval);
+	if (visualization) {
+		//viewfield->PlotContour("potential");
+		//viewfemesh->Plot();
+		viewdrift->Plot();
+
+		viewfemesh->EnableAxes();
+		viewfemesh->SetXaxisTitle("x (cm)");
+		viewfemesh->SetYaxisTitle("z (cm)");
+		viewfemesh->Plot();
+		c1->SaveAs("avalanche.pdf");
 	}
 
-	//viewfield->PlotContour("potential");
-	//viewfemesh->Plot();
-	//viewdrift->Plot();
-
-	/*
-	viewfemesh->EnableAxes();
-	viewfemesh->SetXaxisTitle("x (cm)");
-	viewfemesh->SetYaxisTitle("z (cm)");
-	viewfemesh->Plot();
-	c1->SaveAs("avalanche.pdf");
-	*/
-
-	std::cout << "Transparency: " << histHits->GetEntries()/(double)nAvalanches * 100. << "%" << std::endl;
+	std::cout << "Transparency: " << avalanchesPassed/(double)nAvalanches * 100. << "%" << std::endl;
 
 	savePlots();
 
