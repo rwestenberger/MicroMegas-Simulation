@@ -27,7 +27,7 @@ class MeshGenerator(QtGui.QWidget):
 		self.sb_wire_diameter.setMaximum(500.)
 		self.sb_wire_diameter.setMinimum(.01)
 		self.sb_wire_diameter.setSingleStep(.1)
-		self.sb_wire_diameter.setValue(28.)
+		self.sb_wire_diameter.setValue(25.)
 
 		self.label_space_above_mesh = QtGui.QLabel(u"Space above mesh (µm) ", self)
 		self.sb_space_above_mesh = QtGui.QDoubleSpinBox(self)
