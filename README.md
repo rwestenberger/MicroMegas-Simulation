@@ -24,6 +24,22 @@ Assuming you are in the project root directory:
 
 ## More information
 
-2. clmax option can be adapted as needed. Note that to large clmax will create intersecting surfaces.
+* clmax option can be adapted as needed. Note that to large clmax will create intersecting surfaces.
 
-3. autoclean option is important to avoid possible segmentation faults later.
+* autoclean option is important to avoid possible segmentation faults later:
+
+	```
+	Program received signal SIGSEGV: Segmentation fault - invalid memory reference.
+
+	Backtrace for this error:
+	#0  0x7FF90DA2A407
+	#1  0x7FF90DA2AA1E
+	#2  0x7FF90BEBC17F
+	#3  0x7FF90E378AB8
+	#4  0x7FF90E38B7D8
+	#5  0x7FF90E3A94B7
+	#6  0x7FF90E226100
+	#7  0x7FF90E49C414
+	#8  0x400F7E in solver at Solver.F90:69
+	Segmentation fault
+	```
