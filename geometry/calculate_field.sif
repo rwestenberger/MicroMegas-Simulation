@@ -24,6 +24,7 @@ End
 Solver 1
   Equation = Elec Solver
   Procedure = "StatElecSolve" "StatElecSolver"
+  Calculate Electric Field = True
   Variable = Potential
   Variable DOFs = 1
 
