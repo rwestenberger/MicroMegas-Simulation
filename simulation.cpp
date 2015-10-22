@@ -5,8 +5,7 @@
 #include <TCanvas.h>
 #include <TApplication.h>
 #include <TFile.h>
-#include <TH1F.h>
-#include <TH2F.h>
+#include <TTree.h>
 #include <TRandom3.h>
 #include <TVector3.h>
 #include <TMath.h>
@@ -25,106 +24,48 @@
 
 using namespace Garfield;
 
-TFile* outFile;
-TH1F *histEndpointZ, *histAvalancheStatus, *histHorizontalDriftDistance, *histEnergyGain, *histDriftTime, *histNumberOfElectronEndpoints, *histAvalancheSize;
-TH2F *histHits;
-
-bool avalancheElectron(AvalancheMicroscopic* avalanchem, TVector3 initialPosition, double initialTime, double initialEnergy, TVector3 direction) {
-	avalanchem->AvalancheElectron(initialPosition.x(), initialPosition.y(), initialPosition.z(), initialTime, initialEnergy, direction.x(), direction.y(), direction.z());
-
-	int ne, ni;
-	avalanchem->GetAvalancheSize(ne, ni);
-	//std::cout << "Avalanche: " << ne << " e-, " << ni << " ions" << std::endl;
-
-	double x1, y1, z1, t1;
-	// Final position and time
-	double x2, y2, z2, t2;
-	// Initial and final energy
-	double e1, e2;
-	// Flag indicating why the tracking of an electron was stopped.
-	int status;
-
-	int np = avalanchem->GetNumberOfElectronEndpoints();
-	//std::cout << "   e- endpoints: " << np << std::endl;
-	for (int i=0; i<np; i++) {
-		avalanchem->GetElectronEndpoint(i, x1, y1, z1, t1, e1, x2, y2, z2, t2, e2, status);
-		//std::cout << status << ": (" << x1 << ", " << y1 << ", " << z1 << ") " << e1 << " eV -> (" << x2 << ", " << y2 << ", " << z2 << ") " << e2 << " eV" << std::endl;
-		if (z2 < -0.16) { // hit readout plate
-			histHorizontalDriftDistance->Fill(TMath::Sqrt((x2-x1)*(x2-x1) + (y2-y1)*(y2-y1)));
-			histHits->Fill(x2, y2);
-		}
-
-		histEndpointZ->Fill(z2);
-		histEnergyGain->Fill(e2 - e1);
-		histAvalancheStatus->Fill(status);
-		histDriftTime->Fill(t2 - t1);
-	}
-
-	histNumberOfElectronEndpoints->Fill(np);
-	histAvalancheSize->Fill(ne);
-
-	if (z2 < -0.017) return true; // avalanche passed, cut value from endpointZ plot
-	return false;
-}
-
-void initPlots() {
-	outFile = new TFile("simulation.root", "RECREATE");
-
-	histEndpointZ = new TH1F("endpointZ", "Final z", 100, -0.2, 0.1);
-	histEndpointZ->SetXTitle("z_{final} [cm]");
-
-	histAvalancheStatus = new TH1F("avalancheStatus", "Avalanche Status", 16, -16.5, -0.5);
-
-	histHorizontalDriftDistance = new TH1F("horizontalDriftDistance", "Horizontal drift distance", 100, 0., 0.1);
-	histHorizontalDriftDistance->SetXTitle("xy-drift distance [cm]");
-
-	histEnergyGain = new TH1F("energyGain", "Energy gain", 100, 0., 20.);
-	histEnergyGain->SetXTitle("energy gain [eV]");
-
-	histDriftTime = new TH1F("driftTime", "Drift time", 500, 0., 500.);
-	histDriftTime->SetXTitle("drift time [ns]");
-
-	histHits = new TH2F("hits", "Hits", 100, -.125, .125, 100, -.125, .125);
-	histHits->SetXTitle("x [cm]");
-	histHits->SetXTitle("y [cm]");
-
-	histNumberOfElectronEndpoints = new TH1F("numberOfElectronEndpoints", "Number of electron endpoints", 11, -0.5, 10.5);
-	histNumberOfElectronEndpoints->SetXTitle("#endpoints");
-
-	histAvalancheSize = new TH1F("avalancheSize", "Avalanche Size", 11, -0.5, 10.5);
-	histAvalancheSize->SetXTitle("#e^{-}");
-}
-
-void savePlots() {
-	histEndpointZ->Write();
-	histAvalancheStatus->Write();
-	histHorizontalDriftDistance->Write();
-	histEnergyGain->Write();
-	histDriftTime->Write();
-	histHits->Write();
-	histNumberOfElectronEndpoints->Write();
-	histAvalancheSize->Write();
-
-	outFile->Close();
-}
+TFile *histFile, *treeFile;
 
 int main(int argc, char * argv[]) {
 	TApplication app("app", &argc, argv);
 
-	const bool visualization = true;
+	const bool visualization = false;
 
 	// units cm
-	const double lattice_const = 0.0625;
+	const double lattice_const = 0.00625;
 	double areaXmin = -lattice_const*2., areaXmax = -areaXmin;
 	double areaYmin = -lattice_const*2., areaYmax = -areaYmin;
-	double areaZmin = -0.178, areaZmax = 0.328;
+	double areaZmin = -0.0178, areaZmax = 0.0328;
 	double aspectRatio = (areaXmax-areaXmin) / (areaZmax-areaZmin);
 
-	//TCanvas * c1 = new TCanvas("geom", "Geometry/Fields", 1000, (int)(1000./aspectRatio));
-	TCanvas * c1 = new TCanvas("geom", "Geometry/Fields");
+	TCanvas* c1;
+	if(visualization) c1 = new TCanvas("geom", "Geometry/Fields", (int)(800.*aspectRatio), 800);
+	//TCanvas * c1 = new TCanvas("geom", "Geometry/Fields");
 	TRandom3* rand = new TRandom3(42);
 
-	initPlots();
+	// Tree file
+	Int_t nele;  // number of electrons in avalanche
+	Int_t nelep; // number of electron end points
+	Double_t x0[20000], y0[20000], z0[20000], e0[20000], t0[20000];
+	Double_t x1[20000], y1[20000], z1[20000], e1[20000], t1[20000];
+	Int_t status[20000];
+
+	treeFile = new TFile("avalanche.root", "RECREATE");
+	treeFile->cd();
+	TTree* tree = new TTree("avalancheTree", "Avalanches");
+	tree->Branch("nele", &nele, "nele/I");
+	tree->Branch("nelep", &nelep, "nelep/I");
+	tree->Branch("x0", x0, "x0[20000]/D");
+	tree->Branch("y0", y0, "y0[20000]/D");
+	tree->Branch("z0", z0, "z0[20000]/D");
+	tree->Branch("e0", e0, "e0[20000]/D");
+	tree->Branch("t0", t0, "t0[20000]/D");
+	tree->Branch("x1", x1, "x1[20000]/D");
+	tree->Branch("y1", y1, "y1[20000]/D");
+	tree->Branch("z1", z1, "z1[20000]/D");
+	tree->Branch("e1", e1, "e1[20000]/D");
+	tree->Branch("t1", t1, "t1[20000]/D");
+	tree->Branch("status", status, "status/I");
 
 	//double tEnd = 10.;
 	//int nsBins = 100;
@@ -136,7 +77,7 @@ int main(int argc, char * argv[]) {
 		"geometry/geometry/mesh.nodes",
 		"geometry/dielectrics.dat",
 		"geometry/geometry/field.result",
-		"cm"
+		"mm"
 	);
 	fm->EnablePeriodicityX();
 	fm->EnablePeriodicityY();
@@ -168,29 +109,30 @@ int main(int argc, char * argv[]) {
 
     AvalancheMicroscopic* avalanchemicroscopic = new AvalancheMicroscopic();
     avalanchemicroscopic->SetSensor(sensor);
-    avalanchemicroscopic->SetCollisionSteps(20);
-    avalanchemicroscopic->EnableAvalancheSizeLimit(100);
+    avalanchemicroscopic->SetCollisionSteps(1);
+    avalanchemicroscopic->EnableAvalancheSizeLimit(10);
     //avalanchemicroscopic->EnableSignalCalculation();
 
     ViewField* viewfield;
     ViewDrift* viewdrift;
-    ViewFEMesh* viewfemesh;
+    //ViewFEMesh* viewfemesh;
 
     if (visualization) {
 		// field visualization
 		viewfield = new ViewField();
 	    viewfield->SetSensor(sensor);
 	    viewfield->SetCanvas(c1);
-		viewfield->SetArea(areaXmin, areaZmin, areaXmax, areaZmax);
+		viewfield->SetArea(areaXmin, areaZmin-0.001, areaXmax, areaZmax+0.001);
 		viewfield->SetNumberOfContours(50);
-		viewfield->SetNumberOfSamples2d(50, 100);
+		viewfield->SetNumberOfSamples2d((int)(220*aspectRatio), 220);
 		viewfield->SetPlane(0, -1, 0, 0, 0, 0);
 
 		// drift visualization
 	    viewdrift = new ViewDrift();
-	    viewdrift->SetArea(areaXmin, areaYmin, areaZmin, areaXmax, areaYmax, areaZmax);
+	    viewdrift->SetArea(areaXmin, areaYmin, areaZmin-0.001, areaXmax, areaYmax, areaZmax+0.001);
 	    avalanchemicroscopic->EnablePlotting(viewdrift);
 
+	    /*
 		// FE mesh visualization
 		viewfemesh = new ViewFEMesh();
 		viewfemesh->SetCanvas(c1);
@@ -202,39 +144,70 @@ int main(int argc, char * argv[]) {
 	    viewfemesh->SetColor(2,kYellow+3);
 		viewfemesh->SetViewDrift(viewdrift);
 		viewfemesh->SetArea(areaXmin, -lattice_const, areaZmin, areaXmax, lattice_const, areaZmax);
+		*/
 	}
 
 	// actual simulation
-	const int nAvalanches = 1;
+	const int nEvents = 100;
 	int avalanchesPassed = 0;
-	for (int i=0; i<nAvalanches; i++) {
+	bool notPassed = true;
+	//while (notPassed) {
+	for (int i=0; i<nEvents; i++) {
 		// Set the initial position [cm], direction, starting time [ns] and initial energy [eV]
-		TVector3 start = TVector3((2.*rand->Rndm() - 1.) * lattice_const, (2.*rand->Rndm() - 1.) * lattice_const, 0.1);
-		TVector3 direction = TVector3(0., 0., -1.);
-		double t0 = 0.0;
-		double e0 = 1.0;
+		TVector3 initialPosition = TVector3((2.*rand->Rndm() - 1.) * lattice_const, (2.*rand->Rndm() - 1.) * lattice_const, 0.01);
+		TVector3 initialDirection = TVector3(0., 0., -1.);
+		double initialTime = 0.0;
+		double initialEnergy = 1.0;
 
-		std::cout << '\r' << std::setw(4) << i/(double)nAvalanches*100. << "%"; std::flush(std::cout);
-		bool passed = avalancheElectron(avalanchemicroscopic, start, t0, e0, direction);
-		if (passed) avalanchesPassed++;
+		avalanchemicroscopic->AvalancheElectron(initialPosition.x(), initialPosition.y(), initialPosition.z(), initialTime, initialEnergy, initialDirection.x(), initialDirection.y(), initialDirection.z());
+		//std::cout << '\r' << std::setw(4) << i/(double)nEvents*100. << "%"; std::flush(std::cout);
+
+		int ne, ni;
+		avalanchemicroscopic->GetAvalancheSize(ne, ni);
+		nele = ne;
+
+		double xi, yi, zi, ti, ei;
+		double xf, yf, zf, tf, ef;
+		int stat;
+
+		int np = avalanchemicroscopic->GetNumberOfElectronEndpoints();
+		//std::cout << "Number of electron endpoints: " << np << std::endl;
+		nelep = np;
+		for (int j=0; j<np; j++) {
+			avalanchemicroscopic->GetElectronEndpoint(j, xi, yi, zi, ti, ei, xf, yf, zf, tf, ef, stat);
+
+			x0[j] = xi; z0[j] = yi; z0[j] = zi; t0[j] = ti; e0[j] = ei;
+			x1[j] = xf; z1[j] = yf; z1[j] = zf; t1[j] = tf; e1[j] = ef;
+			status[j] = stat;
+		}
+
+		if (zf < -0.017) {
+			avalanchesPassed++; // avalanche passed, cut value from z1 plot
+			notPassed = false;
+		}
+
+		tree->Fill();
 	}
 	std::cout << std::endl;
 
 	if (visualization) {
-		//viewfield->PlotContour("potential");
-		//viewfemesh->Plot();
-		viewdrift->Plot();
+		viewdrift->Plot(); // 3D drift plot
 
-		viewfemesh->EnableAxes();
+		viewfield->PlotContour("e");
+		/*
+		//viewfemesh->EnableAxes();
 		viewfemesh->SetXaxisTitle("x (cm)");
 		viewfemesh->SetYaxisTitle("z (cm)");
 		viewfemesh->Plot();
+		*/
 		c1->SaveAs("avalanche.pdf");
 	}
 
-	std::cout << "Transparency: " << avalanchesPassed/(double)nAvalanches * 100. << "%" << std::endl;
+	std::cout << "Transparency: " << avalanchesPassed/(double)nEvents * 100. << "%" << std::endl;
 
-	savePlots();
+	treeFile->cd();
+	treeFile->Write();
+	treeFile->Close();
 
 	app.Run(kFALSE);
 	return 0;
