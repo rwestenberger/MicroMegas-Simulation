@@ -22,13 +22,14 @@
 #include "Random.hh"
 #include "AvalancheMicroscopic.hh"
 
+using namespace std;
 using namespace Garfield;
 
 TFile *histFile, *treeFile;
 
 int main(int argc, char * argv[]) {
 	const int nEvents = 100; // number of avalanches to simulate
-	const int maxAvalancheSize = 2; // constrains the maximum number of electrons per avalanche
+	const int maxAvalancheSize = 10; // constrains the maximum number of electrons per avalanche
 	const bool visualization = false; // enables plotting
 
 	// units cm
@@ -48,26 +49,26 @@ int main(int argc, char * argv[]) {
 	// Tree file
 	Int_t nele;  // number of electrons in avalanche
 	Int_t nelep; // number of electron end points
-	Double_t x0[20000], y0[20000], z0[20000], e0[20000], t0[20000];
-	Double_t x1[20000], y1[20000], z1[20000], e1[20000], t1[20000];
-	Int_t status[20000];
+	vector<Int_t> status;
+	vector<Double_t> x0, y0, z0, e0, t0;
+	vector<Double_t> x1, y1, z1, e1, t1;
 
 	treeFile = new TFile("avalanche.root", "RECREATE");
 	treeFile->cd();
 	TTree* tree = new TTree("avalancheTree", "Avalanches");
 	tree->Branch("nele", &nele, "nele/I");
 	tree->Branch("nelep", &nelep, "nelep/I");
-	tree->Branch("x0", x0, "x0[nele]/D");
-	tree->Branch("y0", y0, "y0[nele]/D");
-	tree->Branch("z0", z0, "z0[nele]/D");
-	tree->Branch("e0", e0, "e0[nele]/D");
-	tree->Branch("t0", t0, "t0[nele]/D");
-	tree->Branch("x1", x1, "x1[nele]/D");
-	tree->Branch("y1", y1, "y1[nele]/D");
-	tree->Branch("z1", z1, "z1[nele]/D");
-	tree->Branch("e1", e1, "e1[nele]/D");
-	tree->Branch("t1", t1, "t1[nele]/D");
-	tree->Branch("status", status, "status/I");
+	tree->Branch("status", &status);
+	tree->Branch("x0", &x0);
+	tree->Branch("y0", &y0);
+	tree->Branch("z0", &z0);
+	tree->Branch("e0", &e0);
+	tree->Branch("t0", &t0);
+	tree->Branch("x1", &x1);
+	tree->Branch("y1", &y1);
+	tree->Branch("z1", &z1);
+	tree->Branch("e1", &e1);
+	tree->Branch("t1", &t1);
 
 	//double tEnd = 10.;
 	//int nsBins = 100;
@@ -152,7 +153,6 @@ int main(int argc, char * argv[]) {
 	// actual simulation
 	int avalanchesPassed = 0;
 	bool notPassed = true;
-	//while (notPassed) {
 	for (int i=0; i<nEvents; i++) {
 		// Set the initial position [cm], direction, starting time [ns] and initial energy [eV]
 		TVector3 initialPosition = TVector3((2.*rand->Rndm() - 1.) * lattice_const, (2.*rand->Rndm() - 1.) * lattice_const, 0.01);
@@ -160,26 +160,31 @@ int main(int argc, char * argv[]) {
 		double initialTime = 0.0;
 		double initialEnergy = 1.0;
 
-		std::cout << '\r' << std::setw(4) << i/(double)nEvents*100. << "%"; std::flush(std::cout);
+		cout << "\r" << setw(4) << i/(double)nEvents*100. << "%"; flush(cout);
 		avalanchemicroscopic->AvalancheElectron(initialPosition.x(), initialPosition.y(), initialPosition.z(), initialTime, initialEnergy, initialDirection.x(), initialDirection.y(), initialDirection.z());
 
-		int ne, ni;
+		Int_t ne, ni;
 		avalanchemicroscopic->GetAvalancheSize(ne, ni);
 		nele = ne;
 
-		double xi, yi, zi, ti, ei;
-		double xf, yf, zf, tf, ef;
-		int stat;
+		// local variables to be pushed into vectors
+		Double_t xi, yi, zi, ti, ei;
+		Double_t xf, yf, zf, tf, ef;
+		Int_t stat;
 
 		int np = avalanchemicroscopic->GetNumberOfElectronEndpoints();
-		//std::cout << "Number of electron endpoints: " << np << std::endl;
+		//cout << "Number of electron endpoints: " << np << endl;
+		if (np == 1) { // primary electron did not multiply
+			i--;
+			continue;
+		}
 		nelep = np;
 		for (int j=0; j<np; j++) {
 			avalanchemicroscopic->GetElectronEndpoint(j, xi, yi, zi, ti, ei, xf, yf, zf, tf, ef, stat);
 
-			x0[j] = xi; y0[j] = yi; z0[j] = zi; t0[j] = ti; e0[j] = ei;
-			x1[j] = xf; y1[j] = yf; z1[j] = zf; t1[j] = tf; e1[j] = ef;
-			status[j] = stat;
+			x0.push_back(xi); y0.push_back(yi); z0.push_back(zi); t0.push_back(ti); e0.push_back(ei);
+			x1.push_back(xf); y1.push_back(yf); z1.push_back(zf); t1.push_back(tf); e1.push_back(ef);
+			status.push_back(stat);
 		}
 
 		if (zf < -0.017) {
@@ -189,7 +194,7 @@ int main(int argc, char * argv[]) {
 
 		tree->Fill();
 	}
-	std::cout << std::endl;
+	cout << endl;
 
 	if (visualization) {
 		viewdrift->Plot(); // 3D drift plot
@@ -204,13 +209,13 @@ int main(int argc, char * argv[]) {
 		c1->SaveAs("avalanche.pdf");
 	}
 
-	std::cout << "Transparency: " << avalanchesPassed/(double)nEvents * 100. << "%" << std::endl;
+	cout << "Transparency: " << avalanchesPassed/(double)nEvents * 100. << "%" << endl;
 
 	treeFile->cd();
 	treeFile->Write();
 	treeFile->Close();
 
 	if (visualization) app.Run(kFALSE);
-	std::cout << "Done." << std::endl;
+	cout << "Done." << endl;
 	return 0;
 }
