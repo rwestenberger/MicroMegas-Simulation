@@ -27,9 +27,9 @@ using namespace Garfield;
 TFile *histFile, *treeFile;
 
 int main(int argc, char * argv[]) {
-	TApplication app("app", &argc, argv);
-
-	const bool visualization = false;
+	const int nEvents = 100; // number of avalanches to simulate
+	const int maxAvalancheSize = 2; // constrains the maximum number of electrons per avalanche
+	const bool visualization = false; // enables plotting
 
 	// units cm
 	const double lattice_const = 0.00625;
@@ -37,6 +37,8 @@ int main(int argc, char * argv[]) {
 	double areaYmin = -lattice_const*2., areaYmax = -areaYmin;
 	double areaZmin = -0.0178, areaZmax = 0.0328;
 	double aspectRatio = (areaXmax-areaXmin) / (areaZmax-areaZmin);
+
+	TApplication app("app", &argc, argv);
 
 	TCanvas* c1;
 	if(visualization) c1 = new TCanvas("geom", "Geometry/Fields", (int)(800.*aspectRatio), 800);
@@ -55,16 +57,16 @@ int main(int argc, char * argv[]) {
 	TTree* tree = new TTree("avalancheTree", "Avalanches");
 	tree->Branch("nele", &nele, "nele/I");
 	tree->Branch("nelep", &nelep, "nelep/I");
-	tree->Branch("x0", x0, "x0[20000]/D");
-	tree->Branch("y0", y0, "y0[20000]/D");
-	tree->Branch("z0", z0, "z0[20000]/D");
-	tree->Branch("e0", e0, "e0[20000]/D");
-	tree->Branch("t0", t0, "t0[20000]/D");
-	tree->Branch("x1", x1, "x1[20000]/D");
-	tree->Branch("y1", y1, "y1[20000]/D");
-	tree->Branch("z1", z1, "z1[20000]/D");
-	tree->Branch("e1", e1, "e1[20000]/D");
-	tree->Branch("t1", t1, "t1[20000]/D");
+	tree->Branch("x0", x0, "x0[nele]/D");
+	tree->Branch("y0", y0, "y0[nele]/D");
+	tree->Branch("z0", z0, "z0[nele]/D");
+	tree->Branch("e0", e0, "e0[nele]/D");
+	tree->Branch("t0", t0, "t0[nele]/D");
+	tree->Branch("x1", x1, "x1[nele]/D");
+	tree->Branch("y1", y1, "y1[nele]/D");
+	tree->Branch("z1", z1, "z1[nele]/D");
+	tree->Branch("e1", e1, "e1[nele]/D");
+	tree->Branch("t1", t1, "t1[nele]/D");
 	tree->Branch("status", status, "status/I");
 
 	//double tEnd = 10.;
@@ -110,7 +112,7 @@ int main(int argc, char * argv[]) {
     AvalancheMicroscopic* avalanchemicroscopic = new AvalancheMicroscopic();
     avalanchemicroscopic->SetSensor(sensor);
     avalanchemicroscopic->SetCollisionSteps(1);
-    avalanchemicroscopic->EnableAvalancheSizeLimit(10);
+    avalanchemicroscopic->EnableAvalancheSizeLimit(maxAvalancheSize);
     //avalanchemicroscopic->EnableSignalCalculation();
 
     ViewField* viewfield;
@@ -148,7 +150,6 @@ int main(int argc, char * argv[]) {
 	}
 
 	// actual simulation
-	const int nEvents = 100;
 	int avalanchesPassed = 0;
 	bool notPassed = true;
 	//while (notPassed) {
@@ -159,8 +160,8 @@ int main(int argc, char * argv[]) {
 		double initialTime = 0.0;
 		double initialEnergy = 1.0;
 
+		std::cout << '\r' << std::setw(4) << i/(double)nEvents*100. << "%"; std::flush(std::cout);
 		avalanchemicroscopic->AvalancheElectron(initialPosition.x(), initialPosition.y(), initialPosition.z(), initialTime, initialEnergy, initialDirection.x(), initialDirection.y(), initialDirection.z());
-		//std::cout << '\r' << std::setw(4) << i/(double)nEvents*100. << "%"; std::flush(std::cout);
 
 		int ne, ni;
 		avalanchemicroscopic->GetAvalancheSize(ne, ni);
@@ -176,8 +177,8 @@ int main(int argc, char * argv[]) {
 		for (int j=0; j<np; j++) {
 			avalanchemicroscopic->GetElectronEndpoint(j, xi, yi, zi, ti, ei, xf, yf, zf, tf, ef, stat);
 
-			x0[j] = xi; z0[j] = yi; z0[j] = zi; t0[j] = ti; e0[j] = ei;
-			x1[j] = xf; z1[j] = yf; z1[j] = zf; t1[j] = tf; e1[j] = ef;
+			x0[j] = xi; y0[j] = yi; z0[j] = zi; t0[j] = ti; e0[j] = ei;
+			x1[j] = xf; y1[j] = yf; z1[j] = zf; t1[j] = tf; e1[j] = ef;
 			status[j] = stat;
 		}
 
@@ -209,6 +210,7 @@ int main(int argc, char * argv[]) {
 	treeFile->Write();
 	treeFile->Close();
 
-	app.Run(kFALSE);
+	if (visualization) app.Run(kFALSE);
+	std::cout << "Done." << std::endl;
 	return 0;
 }
