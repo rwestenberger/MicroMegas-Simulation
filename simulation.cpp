@@ -28,22 +28,22 @@ using namespace Garfield;
 TFile *histFile, *treeFile;
 
 int main(int argc, char * argv[]) {
-	const int nEvents = 100; // number of avalanches to simulate
-	const int maxAvalancheSize = 10; // constrains the maximum number of electrons per avalanche
-	const bool visualization = false; // enables plotting
+	const int nEvents = 1; // number of avalanches to simulate
+	const int maxAvalancheSize = 0; // constrains the maximum number of electrons per avalanche, 0 means no limit
+	const bool visualization = true; // enables plotting
 
 	// units cm
 	const double lattice_const = 0.00625;
-	double areaXmin = -lattice_const*2., areaXmax = -areaXmin;
-	double areaYmin = -lattice_const*2., areaYmax = -areaYmin;
+	double areaXmin = -lattice_const*3., areaXmax = -areaXmin;
+	double areaYmin = -lattice_const*3., areaYmax = -areaYmin;
 	double areaZmin = -0.0178, areaZmax = 0.0328;
 	double aspectRatio = (areaXmax-areaXmin) / (areaZmax-areaZmin);
 
 	TApplication app("app", &argc, argv);
 
 	TCanvas* c1;
-	if(visualization) c1 = new TCanvas("geom", "Geometry/Fields", (int)(800.*aspectRatio), 800);
-	//TCanvas * c1 = new TCanvas("geom", "Geometry/Fields");
+	//if(visualization) c1 = new TCanvas("geom", "Geometry/Fields", (int)(800.*aspectRatio), 800);
+	if(visualization) c1 = new TCanvas("geom", "Geometry/Fields", 800, 600);
 	TRandom3* rand = new TRandom3(42);
 
 	// Tree file
@@ -53,22 +53,14 @@ int main(int argc, char * argv[]) {
 	vector<Double_t> x0, y0, z0, e0, t0;
 	vector<Double_t> x1, y1, z1, e1, t1;
 
-	treeFile = new TFile("avalanche.root", "RECREATE");
+	treeFile = new TFile("outfiles/avalanche.root", "RECREATE");
 	treeFile->cd();
 	TTree* tree = new TTree("avalancheTree", "Avalanches");
 	tree->Branch("nele", &nele, "nele/I");
 	tree->Branch("nelep", &nelep, "nelep/I");
 	tree->Branch("status", &status);
-	tree->Branch("x0", &x0);
-	tree->Branch("y0", &y0);
-	tree->Branch("z0", &z0);
-	tree->Branch("e0", &e0);
-	tree->Branch("t0", &t0);
-	tree->Branch("x1", &x1);
-	tree->Branch("y1", &y1);
-	tree->Branch("z1", &z1);
-	tree->Branch("e1", &e1);
-	tree->Branch("t1", &t1);
+	tree->Branch("x0", &x0); tree->Branch("y0", &y0); tree->Branch("z0", &z0); tree->Branch("e0", &e0); tree->Branch("t0", &t0);
+	tree->Branch("x1", &x1); tree->Branch("y1", &y1); tree->Branch("z1", &z1); tree->Branch("e1", &e1); tree->Branch("t1", &t1);
 
 	//double tEnd = 10.;
 	//int nsBins = 100;
@@ -107,20 +99,22 @@ int main(int argc, char * argv[]) {
     Sensor* sensor = new Sensor();
     sensor->AddComponent(fm);
     sensor->SetArea(areaXmin, areaYmin, areaZmin, areaXmax, areaYmax, areaZmax);
-    //sensor->AddElectrode(fm, "readout");
-    //sensor->SetTimeWindow(0., tEnd/nsBins,nsBins);
+    sensor->AddElectrode(fm, "readout");
+    sensor->SetTimeWindow(-2., 0.1, 80);
 
     AvalancheMicroscopic* avalanchemicroscopic = new AvalancheMicroscopic();
     avalanchemicroscopic->SetSensor(sensor);
     avalanchemicroscopic->SetCollisionSteps(1);
-    avalanchemicroscopic->EnableAvalancheSizeLimit(maxAvalancheSize);
-    //avalanchemicroscopic->EnableSignalCalculation();
+    if (maxAvalancheSize > 0) avalanchemicroscopic->EnableAvalancheSizeLimit(maxAvalancheSize);
+    avalanchemicroscopic->EnableSignalCalculation();
 
     ViewField* viewfield;
     ViewDrift* viewdrift;
     //ViewFEMesh* viewfemesh;
+    ViewSignal* viewsignal;
 
     if (visualization) {
+    	/*
 		// field visualization
 		viewfield = new ViewField();
 	    viewfield->SetSensor(sensor);
@@ -129,11 +123,14 @@ int main(int argc, char * argv[]) {
 		viewfield->SetNumberOfContours(50);
 		viewfield->SetNumberOfSamples2d((int)(220*aspectRatio), 220);
 		viewfield->SetPlane(0, -1, 0, 0, 0, 0);
+		*/
 
+		/*
 		// drift visualization
 	    viewdrift = new ViewDrift();
 	    viewdrift->SetArea(areaXmin, areaYmin, areaZmin-0.001, areaXmax, areaYmax, areaZmax+0.001);
 	    avalanchemicroscopic->EnablePlotting(viewdrift);
+	    */
 
 	    /*
 		// FE mesh visualization
@@ -148,6 +145,11 @@ int main(int argc, char * argv[]) {
 		viewfemesh->SetViewDrift(viewdrift);
 		viewfemesh->SetArea(areaXmin, -lattice_const, areaZmin, areaXmax, lattice_const, areaZmax);
 		*/
+
+		// signal visualization
+		viewsignal = new ViewSignal();
+    	viewsignal->SetSensor(sensor);
+    	viewsignal->SetCanvas(c1);
 	}
 
 	// actual simulation
@@ -197,16 +199,17 @@ int main(int argc, char * argv[]) {
 	cout << endl;
 
 	if (visualization) {
-		viewdrift->Plot(); // 3D drift plot
+		//viewdrift->Plot(); // 3D drift plot
 
-		viewfield->PlotContour("e");
+		//viewfield->PlotContour("e");
 		/*
 		//viewfemesh->EnableAxes();
 		viewfemesh->SetXaxisTitle("x (cm)");
 		viewfemesh->SetYaxisTitle("z (cm)");
 		viewfemesh->Plot();
 		*/
-		c1->SaveAs("avalanche.pdf");
+		viewsignal->PlotSignal("readout");
+		c1->SaveAs("outfiles/avalanche.pdf");
 	}
 
 	cout << "Transparency: " << avalanchesPassed/(double)nEvents * 100. << "%" << endl;
