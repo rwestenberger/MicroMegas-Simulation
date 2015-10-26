@@ -82,7 +82,7 @@ End
 Boundary Condition 3
   Target Boundaries(1) = 5 
   Name = "Readout"
-  Potential = 600 ! 600 for about 40kV/cm
+  Potential = 512 ! 512 for about 40kV/cm in 128mum amp region
 End
 
 

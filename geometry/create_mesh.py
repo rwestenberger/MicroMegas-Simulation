@@ -41,7 +41,7 @@ class MeshGenerator(QtGui.QWidget):
 		self.sb_space_below_mesh.setMaximum(1000.)
 		self.sb_space_below_mesh.setMinimum(0.)
 		self.sb_space_below_mesh.setSingleStep(1.)
-		self.sb_space_below_mesh.setValue(150.)
+		self.sb_space_below_mesh.setValue(128.)
 
 		self.label_safety_distance = QtGui.QLabel(u"Safety distance between wires (µm) ", self)
 		self.sb_safety_distance = QtGui.QDoubleSpinBox(self)
