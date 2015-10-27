@@ -28,8 +28,8 @@ using namespace Garfield;
 TFile *histFile, *treeFile;
 
 int main(int argc, char * argv[]) {
-	const int nEvents = 1; // number of avalanches to simulate
-	const int maxAvalancheSize = 0; // constrains the maximum number of electrons per avalanche, 0 means no limit
+	const int numberOfEvents = 100; // number of avalanches to simulate
+	const int maxAvalancheSize = 10; // constrains the maximum avalanche size, 0 means no limit
 	const bool visualization = true; // enables plotting
 
 	// units cm
@@ -154,15 +154,14 @@ int main(int argc, char * argv[]) {
 
 	// actual simulation
 	int avalanchesPassed = 0;
-	bool notPassed = true;
-	for (int i=0; i<nEvents; i++) {
+	for (int i=0; i<numberOfEvents; i++) {
 		// Set the initial position [cm], direction, starting time [ns] and initial energy [eV]
 		TVector3 initialPosition = TVector3((2.*rand->Rndm() - 1.) * lattice_const, (2.*rand->Rndm() - 1.) * lattice_const, 0.01);
 		TVector3 initialDirection = TVector3(0., 0., -1.);
-		double initialTime = 0.0;
-		double initialEnergy = 1.0;
+		Double_t initialTime = 0.0;
+		Double_t initialEnergy = 1.0;
 
-		cout << "\r" << setw(4) << i/(double)nEvents*100. << "%"; flush(cout);
+		cout << "\r" << setw(4) << i/(double)numberOfEvents*100. << "% done: " << (double)avalanchesPassed/i*100. << "% transparency     "; flush(cout);
 		avalanchemicroscopic->AvalancheElectron(initialPosition.x(), initialPosition.y(), initialPosition.z(), initialTime, initialEnergy, initialDirection.x(), initialDirection.y(), initialDirection.z());
 
 		Int_t ne, ni;
@@ -176,22 +175,27 @@ int main(int argc, char * argv[]) {
 
 		int np = avalanchemicroscopic->GetNumberOfElectronEndpoints();
 		//cout << "Number of electron endpoints: " << np << endl;
+		/*
 		if (np == 1) { // primary electron did not multiply
 			i--;
 			continue;
 		}
+		*/
 		nelep = np;
+
+		Double_t zmin = 0.0; // get minimal z value to see if the avalanche passed the mesh or not
 		for (int j=0; j<np; j++) {
 			avalanchemicroscopic->GetElectronEndpoint(j, xi, yi, zi, ti, ei, xf, yf, zf, tf, ef, stat);
 
 			x0.push_back(xi); y0.push_back(yi); z0.push_back(zi); t0.push_back(ti); e0.push_back(ei);
 			x1.push_back(xf); y1.push_back(yf); z1.push_back(zf); t1.push_back(tf); e1.push_back(ef);
 			status.push_back(stat);
+			if (zf < zmin) zmin = zf;
 		}
 
-		if (zf < -0.017) {
-			avalanchesPassed++; // avalanche passed, cut value from z1 plot
-			notPassed = false;
+		if (zmin < -0.0152) { // avalanche passed, cut value from z1 plot
+			avalanchesPassed++;
+			if (numberOfEvents == 1) break;
 		}
 
 		tree->Fill();
@@ -212,7 +216,7 @@ int main(int argc, char * argv[]) {
 		c1->SaveAs("outfiles/avalanche.pdf");
 	}
 
-	cout << "Transparency: " << avalanchesPassed/(double)nEvents * 100. << "%" << endl;
+	cout << "Transparency: " << avalanchesPassed/(double)numberOfEvents * 100. << "%" << endl;
 
 	treeFile->cd();
 	treeFile->Write();
