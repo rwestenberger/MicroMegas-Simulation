@@ -67,7 +67,7 @@ End
 ! Upper end
 Boundary Condition 1
   Target Boundaries(1) = 14
-  Potential = -30 ! -30 for about 1kV/cm
+  Potential = -18 ! -18 for about 600V/cm
   Name = "Upper"
 End
 
