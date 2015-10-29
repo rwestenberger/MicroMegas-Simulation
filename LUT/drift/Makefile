@@ -17,8 +17,8 @@ LDFLAGS = `root-config --glibs` -lGeom -lgfortran -lm
 LDFLAGS += -L$(LIBDIR) -lGarfield
 LDFLAGS += -g
 
-simulation: simulation.cpp
-	$(CXX) $(CFLAGS) simulation.cpp
-	$(CXX) -o simulation simulation.o $(LDFLAGS)
-	rm simulation.o
+drift: drift.cpp
+	$(CXX) $(CFLAGS) drift.cpp
+	$(CXX) -o drift drift.o $(LDFLAGS)
+	rm drift.o
 

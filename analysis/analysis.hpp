@@ -29,7 +29,7 @@ public :
 	TView *vEvent;
 
 	const Double_t lattice_const = 0.00625;
-	const Double_t readoutZ = -0.0178;
+	const Double_t readoutZ = -0.0152;
 	Double_t viewXmin = -lattice_const*3., viewXmax = -viewXmin;
 	Double_t viewYmin = -lattice_const*3., viewYmax = -viewYmin;
 	Double_t viewZmin = readoutZ, viewZmax = 0.0328;
@@ -47,12 +47,8 @@ public :
 
 Avalanche::Avalanche(TTree *tree) : fChain(0)  {
 	if (tree == 0) {
-		TFile *f = (TFile*)gROOT->GetListOfFiles()->FindObject("../avalanche.root");
-		if (!f || !f->IsOpen()) {
-			f = new TFile("../avalanche.root");
-		}
+		TFile *f = new TFile("../LUT/avalancheLUT.root");
 		f->GetObject("avalancheTree",tree);
-
 	}
 	Init(tree);
 }

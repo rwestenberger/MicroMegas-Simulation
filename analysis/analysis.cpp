@@ -24,7 +24,7 @@ void Avalanche::Loop() {
 
 		if (Cut(jentry)) continue;
 
-		cout << "Event " << jentry << ": " <<  nele << " e-, " << nelep << " tracks" << endl;
+		cout << "Event " << jentry << ": " << nelep-1 << " e- hitting readout, " << nele << " e- involved" << endl;
 		DrawEvent();
 	}
 }
@@ -37,7 +37,7 @@ void Avalanche::DrawEvent() {
 		track->SetLineWidth(2);
 		track->SetLineColor(kBlue);
 		track->Draw();
-		if (abs(z1->at(ep) - readoutZ) < 1e-3) {
+		if (z1->at(ep) < readoutZ + 1e-3) {
 			TPolyMarker3D *readoutHit = new TPolyMarker3D(1);
 			readoutHit->SetPoint(0, x1->at(ep), y1->at(ep), z1->at(ep));
 			readoutHit->SetMarkerSize(1);
