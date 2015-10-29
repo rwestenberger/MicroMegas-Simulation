@@ -1,8 +1,8 @@
 # LUT creation
 Dependencies: FreeCAD, Elmer, gmsh, Garfield++, Geant4, ROOT
 
-## Build procedure
-Assuming you are either in the avalanche or drift LUT directory:
+## Avalanche simulation procedure
+Assuming you are in the avalanche LUT directory:
 
 1. Export FreeCAD model (geometry/geometry.fcstd) to .step file.
 
@@ -20,13 +20,23 @@ Assuming you are either in the avalanche or drift LUT directory:
 	`make`
 6. Run simulation:
 
-	`./simulation`
+	`./avalanche`
+
+## Drift simulation procedure
+Assuming you are in the drift LUT directory:
+
+1. Build Garfield++ executable:
+
+	`make`
+2. Run simulation:
+
+	`./drift`
 
 ## More information
 
-* clmax option can be adapted as needed. Note that to large clmax will create intersecting surfaces.
+* Avalanche step 2: clmax option can be adapted as needed. Note that to large clmax will create intersecting surfaces.
 
-* autoclean option is important to avoid possible segmentation faults later:
+* Avalanche step 3: autoclean option is important to avoid possible segmentation faults later:
 
 	```
 	Program received signal SIGSEGV: Segmentation fault - invalid memory reference.
