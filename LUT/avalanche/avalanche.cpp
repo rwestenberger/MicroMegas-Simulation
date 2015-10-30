@@ -28,11 +28,12 @@ using namespace Garfield;
 TFile *histFile, *treeFile;
 
 int main(int argc, char * argv[]) {
-	const int numberOfEvents = 100; // number of avalanches to simulate
+	const int numberOfEvents = 100; // number of avalanches to simulate, 500 events took 646min
 	const int maxAvalancheSize = 0; // constrains the maximum avalanche size, 0 means no limit
 	const bool visualization = false; // enables plotting
 	const bool ignoreNotPassingEvents = true; // if true skips event if it doesn't reach the readout
 	const double startZ = 0.006; // starting electron z value, height above the mesh; 60µm is where the field gets inhomogeneous (at about -2.3V to about +150V)
+	const double initialEnergy = 0.5; // starting energy, from drift simulation this is about 0-2eV (max at 0.5eV)
 
 	// units cm
 	const double lattice_const = 0.00625;
@@ -159,7 +160,6 @@ int main(int argc, char * argv[]) {
 		TVector3 initialPosition = TVector3(0., 0., startZ);
 		TVector3 initialDirection = TVector3(0., 0., -1.);
 		Double_t initialTime = 0.0;
-		Double_t initialEnergy = 200.0;
 
 		cout << "\r" << setw(4) << i/(double)numberOfEvents*100. << "% done: " << (double)avalanchesPassed/i*100. << "% transparency     "; flush(cout);
 		avalanchemicroscopic->AvalancheElectron(initialPosition.x(), initialPosition.y(), initialPosition.z(), initialTime, initialEnergy, initialDirection.x(), initialDirection.y(), initialDirection.z());
