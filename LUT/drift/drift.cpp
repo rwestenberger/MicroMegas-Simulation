@@ -18,6 +18,7 @@
 #include "Plotting.hh"
 #include "GarfieldConstants.hh"
 #include "AvalancheMicroscopic.hh"
+#include "TrackHeed.hh"
 
 using namespace std;
 using namespace Garfield;
@@ -137,10 +138,11 @@ int main(int argc, char * argv[]) {
 		tree->Fill();
 		x0.clear(); y0.clear(); z0.clear(); e0.clear(); t0.clear();
 		x1.clear(); y1.clear(); z1.clear(); e1.clear(); t1.clear();
+
+		cout << "Number of electrons: " << nele << endl;
 	}
 	cout << endl;
 
-	cout << "Number of electrons: " << nele << endl;
 
 	if (visualization) {
 		viewdrift->Plot();
