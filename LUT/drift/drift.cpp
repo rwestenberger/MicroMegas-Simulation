@@ -25,16 +25,17 @@ using namespace Garfield;
 TFile *histFile, *treeFile;
 
 int main(int argc, char * argv[]) {
-	const int numberOfEvents = 10000; // number of avalanches to simulate, with current setup about 2min for 1k events
+	const int numberOfEvents = 1; // number of avalanches to simulate, 100k events took 500min
 	const int maxAvalancheSize = 0; // constrains the maximum avalanche size, 0 means no limit
-	const bool visualization = false; // enables plotting
-	const double driftField = 600.; // V/cm
+	const bool visualization = false; // plotting
+	const double driftField = 500.; // V/cm
+	const double initialEnergy = 200e3; // x-ray photon: 5-250 keV
 	const double startZ = 1.0; // starting electron z value [cm], height above the transition zone
 	const double endZ = 0.006; // end of the drift region, 60µm above the mesh where the field gets inhomogeneous (in the region of about -2.3V to about +150V)
 
 	const double lattice_const = 0.00625;
-	double areaXmin = -lattice_const*3., areaXmax = -areaXmin;
-	double areaYmin = -lattice_const*3., areaYmax = -areaYmin;
+	double areaXmin = -1.5, areaXmax = -areaXmin;
+	double areaYmin = -1.5, areaYmax = -areaYmin;
 
 	TApplication app("app", &argc, argv);
 
@@ -67,8 +68,8 @@ int main(int argc, char * argv[]) {
 	gas->SetMaxElectronEnergy(200.);
 	gas->Initialise(true);
 
-	// homogeneous field in z direction
-	SolidBox* box = new SolidBox(0, 0, (startZ+endZ+1e-3)/2., 100.*lattice_const, 100.*lattice_const, (startZ-endZ+1e-3)/2.);
+	// homogeneous field in z direction in a box (additional 1e-3 cm safety space above the start point)
+	SolidBox* box = new SolidBox(0, 0, (startZ+endZ+1e-3)/2., (areaXmax-areaXmin)/2., (areaYmax-areaYmin)/2., (startZ-endZ+1e-3)/2.);
 	GeometrySimple* geo = new GeometrySimple();
 	geo->AddSolid(box, gas);
 
@@ -95,7 +96,7 @@ int main(int argc, char * argv[]) {
 		//viewgeometry->SetGeometry(geo);
 
 		viewdrift = new ViewDrift();
-		viewdrift->SetArea(-10.*lattice_const, -10.*lattice_const, startZ, 10.*lattice_const, 10.*lattice_const, endZ);
+		viewdrift->SetArea(areaXmin, areaYmin, startZ, areaXmax, areaYmax, endZ);
 		avalanchemicroscopic->EnablePlotting(viewdrift);
 	}
 
@@ -103,9 +104,8 @@ int main(int argc, char * argv[]) {
 	for (int i=0; i<numberOfEvents; i++) {
 		// Set the initial position [cm], direction, starting time [ns] and initial energy [eV]
 		TVector3 initialPosition = TVector3(0., 0., startZ);
-		TVector3 initialDirection = TVector3(0., 0., -1.);
+		TVector3 initialDirection = TVector3(-1., -1., -1.);
 		Double_t initialTime = 0.0;
-		Double_t initialEnergy = 20.0;
 
 		cout << "\r" << setw(4) << i/(double)numberOfEvents*100. << "% done   "; flush(cout);
 		avalanchemicroscopic->AvalancheElectron(initialPosition.x(), initialPosition.y(), initialPosition.z(), initialTime, initialEnergy, initialDirection.x(), initialDirection.y(), initialDirection.z());
@@ -139,6 +139,8 @@ int main(int argc, char * argv[]) {
 		x1.clear(); y1.clear(); z1.clear(); e1.clear(); t1.clear();
 	}
 	cout << endl;
+
+	cout << "Number of electrons: " << nele << endl;
 
 	if (visualization) {
 		viewdrift->Plot();
