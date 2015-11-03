@@ -1,7 +1,7 @@
-# Macro file for example B1
+# Macro file for example MM
 # 
 # To be run preferably in batch, without graphics:
-# % exampleB1 run2.mac
+# % exampleMM run2.mac
 #
 #/run/numberOfWorkers 4
 /run/initialize
