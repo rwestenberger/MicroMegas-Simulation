@@ -4,11 +4,22 @@ Dependencies: FreeCAD, Elmer, gmsh, Garfield++, Geant4, ROOT
 ## Photoconversion simulation procedure
 Assuming you are in the photoconversion simulation directory:
 
-1. Build Geant4 executable:
+1. Create build directory:
+	`mkdir build && cd build`
 
-	`make`
-2. Run simulation:
-	`./photoconversion`
+2. Configure Geant4 build:
+
+	`cmake -DCMAKE_INSTALL_PREFIX=.. ..`
+
+3. Build Geant4 simulation:
+
+	`make && make install`
+
+4. Run simulation:
+	`../bin/photoconversion`
+
+5. Init visualisation:
+	`/control/execute vis.mac`
 
 ## Drift simulation procedure
 Assuming you are in the drift simulation directory:
