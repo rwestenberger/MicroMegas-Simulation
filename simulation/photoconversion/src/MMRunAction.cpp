@@ -47,9 +47,7 @@ void MMRunAction::EndOfRunAction(const G4Run* run) {
 	G4double rms = edep2 - edep*edep/nofEvents;
 	if (rms > 0.) rms = std::sqrt(rms); else rms = 0.;
 
-	const MMDetectorConstruction* detectorConstruction
-	 = static_cast<const MMDetectorConstruction*>
-		 (G4RunManager::GetRunManager()->GetUserDetectorConstruction());
+	const MMDetectorConstruction* detectorConstruction = static_cast<const MMDetectorConstruction*>(G4RunManager::GetRunManager()->GetUserDetectorConstruction());
 	G4double mass = detectorConstruction->GetScoringVolume()->GetMass();
 	G4double dose = edep/mass;
 	G4double rmsDose = rms/mass;
@@ -57,17 +55,14 @@ void MMRunAction::EndOfRunAction(const G4Run* run) {
 	// Run conditions
 	//  note: There is no primary generator action object for "master"
 	//        run manager for multi-threaded mode.
-	const MMPrimaryGeneratorAction* generatorAction
-	 = static_cast<const MMPrimaryGeneratorAction*>
-		 (G4RunManager::GetRunManager()->GetUserPrimaryGeneratorAction());
+	const MMPrimaryGeneratorAction* generatorAction = static_cast<const MMPrimaryGeneratorAction*>(G4RunManager::GetRunManager()->GetUserPrimaryGeneratorAction());
 	G4String runCondition;
-	if (generatorAction)
-	{
+	if (generatorAction) {
 		const G4ParticleGun* particleGun = generatorAction->GetParticleGun();
 		runCondition += particleGun->GetParticleDefinition()->GetParticleName();
 		runCondition += " of ";
 		G4double particleEnergy = particleGun->GetParticleEnergy();
-		runCondition += G4BestUnit(particleEnergy,"Energy");
+		runCondition += G4BestUnit(particleEnergy, "Energy");
 	}
 				
 	// Print

@@ -9,6 +9,7 @@
 #include "G4Trd.hh"
 #include "G4LogicalVolume.hh"
 #include "G4PVPlacement.hh"
+#include "G4VisAttributes.hh"
 #include "G4SystemOfUnits.hh"
 
 MMDetectorConstruction::MMDetectorConstruction() : G4VUserDetectorConstruction(), fScoringVolume(0) {}
@@ -18,50 +19,45 @@ MMDetectorConstruction::~MMDetectorConstruction() {}
 G4VPhysicalVolume* MMDetectorConstruction::Construct() {  
 	G4NistManager* nist = G4NistManager::Instance();
 
-	G4double env_sizeXY = 20*cm, env_sizeZ = 30*cm;
-	G4Material* env_mat = nist->FindOrBuildMaterial("G4_WATER");
-
 	G4bool checkOverlaps = true;
 
+	G4double thickness_kathode = .2*mm;
+	G4double thickness_coating = .1*mm;
 
-	G4double world_sizeXY = 1.2*env_sizeXY;
-	G4double world_sizeZ  = 1.2*env_sizeZ;
-	G4Material* world_mat = nist->FindOrBuildMaterial("G4_AIR");
-	G4Box* solidWorld = new G4Box("World", 0.5*world_sizeXY, 0.5*world_sizeXY, 0.5*world_sizeZ);
+	// World
+	G4double sizeXY_world = 11*cm;
+	G4double sizeZ_world  = 1*cm;
+	G4Material* mat_air = nist->FindOrBuildMaterial("G4_AIR");
 
-	G4LogicalVolume* logicWorld = new G4LogicalVolume(solidWorld, world_mat, "World");
-	G4VPhysicalVolume* physWorld = new G4PVPlacement(0, G4ThreeVector(), logicWorld, "World", 0, false, 0, checkOverlaps);
+	G4Box* solid_world = new G4Box("World", .5*sizeXY_world, .5*sizeXY_world, .5*sizeZ_world);
+	G4LogicalVolume* logic_world = new G4LogicalVolume(solid_world, mat_air, "World");
+	G4VPhysicalVolume* phyis_world = new G4PVPlacement(0, G4ThreeVector(), logic_world, "World", 0, false, 0, checkOverlaps);
 
-	G4Box* solidEnv = new G4Box("Envelope", 0.5*env_sizeXY, 0.5*env_sizeXY, 0.5*env_sizeZ);
-	G4LogicalVolume* logicEnv = new G4LogicalVolume(solidEnv, env_mat, "Envelope");							 
-	new G4PVPlacement(0, G4ThreeVector(), logicEnv, "Envelope", logicWorld, false, 0, checkOverlaps);
+	// Kathode
+	G4double sizeXY_kathode = 10*cm;
+	G4Material* mat_kapton = nist->FindOrBuildMaterial("G4_KAPTON");
 
-	// Shape 1
-	G4Material* shape1_mat = nist->FindOrBuildMaterial("G4_A-150_TISSUE");
-	G4ThreeVector pos1 = G4ThreeVector(0, 2*cm, -7*cm);
+	G4ThreeVector pos_kathode = G4ThreeVector(0, 0, 0);
+	G4Box* solid_kathode = new G4Box("Kathode", .5*sizeXY_kathode, .5*sizeXY_kathode, .5*thickness_kathode);
+	G4LogicalVolume* logic_kathode = new G4LogicalVolume(solid_kathode, mat_kapton, "Kathode");
+	G4VisAttributes* visatt_kathode = new G4VisAttributes(G4Colour(1., .64, .08));
+	visatt_kathode->SetForceWireframe(true);
+	logic_kathode->SetVisAttributes(visatt_kathode);
+	new G4PVPlacement(0, pos_kathode, logic_kathode, "Kathode", logic_world, false, 0, checkOverlaps);
 
-	G4double shape1_rmina =  0.*cm, shape1_rmaxa = 2.*cm;
-	G4double shape1_rminb =  0.*cm, shape1_rmaxb = 4.*cm;
-	G4double shape1_hz = 3.*cm;
-	G4double shape1_phimin = 0.*deg, shape1_phimax = 360.*deg;
-	G4Cons* solidShape1 = new G4Cons("Shape1", shape1_rmina, shape1_rmaxa, shape1_rminb, shape1_rmaxb, shape1_hz, shape1_phimin, shape1_phimax);
-	G4LogicalVolume* logicShape1 = new G4LogicalVolume(solidShape1, shape1_mat, "Shape1");
-	new G4PVPlacement(0, pos1, logicShape1, "Shape1", logicEnv, false, 0, checkOverlaps);
+	// Coating
+	G4double sizeXY_coating = sizeXY_kathode;
+	G4Material* mat_coating = nist->FindOrBuildMaterial("G4_Au");
 
-	// Shape 2
-	G4Material* shape2_mat = nist->FindOrBuildMaterial("G4_BONE_COMPACT_ICRU");
-	G4ThreeVector pos2 = G4ThreeVector(0, -1*cm, 7*cm);
+	G4ThreeVector pos_coating = G4ThreeVector(0, 0, (thickness_kathode + thickness_coating)/2.);
+	G4Box* solid_coating = new G4Box("Coating", .5*sizeXY_coating, .5*sizeXY_coating, .5*thickness_coating);
+	G4LogicalVolume* logic_coating = new G4LogicalVolume(solid_coating, mat_coating, "Coating");
+	G4VisAttributes* visatt_coating = new G4VisAttributes(G4Colour(1., 1., 0.));
+	visatt_coating->SetForceWireframe(true);
+	logic_coating->SetVisAttributes(visatt_coating);
+	new G4PVPlacement(0, pos_coating, logic_coating, "Coating", logic_world, false, 0, checkOverlaps);
 
-	G4double shape2_dxa = 12*cm, shape2_dxb = 12*cm;
-	G4double shape2_dya = 10*cm, shape2_dyb = 16*cm;
-	G4double shape2_dz  = 6*cm;      
-	G4Trd* solidShape2 = new G4Trd("Shape2", 0.5*shape2_dxa, 0.5*shape2_dxb, 0.5*shape2_dya, 0.5*shape2_dyb, 0.5*shape2_dz);
-								
-	G4LogicalVolume* logicShape2 = new G4LogicalVolume(solidShape2, shape2_mat, "Shape2");
-							 
-	new G4PVPlacement(0, pos2, logicShape2, "Shape2", logicEnv, false, 0, checkOverlaps);
-								
-	fScoringVolume = logicShape2;
+	fScoringVolume = logic_kathode;
 
-	return physWorld;
+	return phyis_world;
 }
