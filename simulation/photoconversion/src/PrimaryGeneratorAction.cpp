@@ -1,4 +1,4 @@
-#include "MMPrimaryGeneratorAction.hpp"
+#include "PrimaryGeneratorAction.hpp"
 
 #include "G4LogicalVolumeStore.hh"
 #include "G4LogicalVolume.hh"
@@ -11,7 +11,7 @@
 #include "G4PhysicalConstants.hh"
 #include "Randomize.hh"
 
-MMPrimaryGeneratorAction::MMPrimaryGeneratorAction() : G4VUserPrimaryGeneratorAction(), fParticleGun(0) {
+PrimaryGeneratorAction::PrimaryGeneratorAction() : G4VUserPrimaryGeneratorAction(), fParticleGun(0) {
 	G4int n_particle = 1;
 	fParticleGun = new G4ParticleGun(n_particle);
 
@@ -23,11 +23,11 @@ MMPrimaryGeneratorAction::MMPrimaryGeneratorAction() : G4VUserPrimaryGeneratorAc
 	fParticleGun->SetParticleEnergy(200.*keV);
 }
 
-MMPrimaryGeneratorAction::~MMPrimaryGeneratorAction() {
+PrimaryGeneratorAction::~PrimaryGeneratorAction() {
 	delete fParticleGun;
 }
 
-void MMPrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent) {
+void PrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent) {
 	G4double x0 = (G4UniformRand()-.5)*10*cm;
 	G4double y0 = (G4UniformRand()-.5)*10*cm;
 	G4double z0 = -0.5*cm;

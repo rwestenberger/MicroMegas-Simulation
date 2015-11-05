@@ -1,5 +1,6 @@
-#include "MMDetectorConstruction.hpp"
-#include "MMActionInitialization.hpp"
+#include "DetectorConstruction.hpp"
+#include "ActionInitialization.hpp"
+#include "PhysicsList.hpp"
 
 #ifdef G4MULTITHREADED
 #include "G4MTRunManager.hh"
@@ -33,16 +34,11 @@ int main(int argc,char** argv) {
 
 	// Set mandatory initialization classes
 	//
-	// Detector construction
-	runManager->SetUserInitialization(new MMDetectorConstruction());
-
-	// Physics list
-	G4VModularPhysicsList* physicsList = new QBBC;
-	physicsList->SetVerboseLevel(1);
-	runManager->SetUserInitialization(physicsList);
+	runManager->SetUserInitialization(new PhysicsList);
+	runManager->SetUserInitialization(new DetectorConstruction());
 		
 	// User action initialization
-	runManager->SetUserInitialization(new MMActionInitialization());
+	runManager->SetUserInitialization(new ActionInitialization());
 	
 	// Initialize visualization
 	//
