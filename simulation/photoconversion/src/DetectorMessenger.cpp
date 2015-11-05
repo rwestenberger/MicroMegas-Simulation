@@ -32,7 +32,7 @@ DetectorMessenger::DetectorMessenger(DetectorConstruction* det) : G4UImessenger(
 	fCoatMaterCmd->SetDefaultValue("empty");
 	fCoatMaterCmd->AvailableForStates(G4State_PreInit, G4State_Idle);
 
-	fIonCmd = new G4UIcmdWithADoubleAndUnit("/testem/setPairEnergy",this);
+	fIonCmd = new G4UIcmdWithADoubleAndUnit("/MM/setPairEnergy",this);
 	fIonCmd->SetGuidance("Set energy per electron-ion pair for detector");
 	fIonCmd->SetParameterName("en", false, false);
 	fIonCmd->SetUnitCategory("Energy");
