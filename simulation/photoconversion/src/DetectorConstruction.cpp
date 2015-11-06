@@ -16,8 +16,8 @@
 DetectorConstruction::DetectorConstruction() : G4VUserDetectorConstruction(), fDetectorMessenger(0) {
 	fDetectorMessenger = new DetectorMessenger(this);
 
-	fKathodeThickness = 0.2*mm;
-	fCoatingThickness = 0.1*mm;
+	fKathodeThickness = .2*mm;
+	fCoatingThickness = .1*mm;
 }
 
 DetectorConstruction::~DetectorConstruction() {
@@ -42,7 +42,7 @@ G4VPhysicalVolume* DetectorConstruction::Construct() {
 	G4double sizeXY_kathode = 10*cm;
 	G4Material* mat_kapton = nist->FindOrBuildMaterial("G4_KAPTON");
 
-	G4ThreeVector pos_kathode = G4ThreeVector(0, 0, 0);
+	G4ThreeVector pos_kathode = G4ThreeVector(0, 0, fKathodeThickness/2.);
 	G4Box* solid_kathode = new G4Box("Kathode", .5*sizeXY_kathode, .5*sizeXY_kathode, .5*fKathodeThickness);
 	fLogicKathode = new G4LogicalVolume(solid_kathode, mat_kapton, "Kathode");
 	G4VisAttributes* visatt_kathode = new G4VisAttributes(G4Colour(1., .64, .08, .5));
@@ -54,7 +54,7 @@ G4VPhysicalVolume* DetectorConstruction::Construct() {
 	G4double sizeXY_coating = sizeXY_kathode;
 	G4Material* mat_coating = nist->FindOrBuildMaterial("G4_Au");
 
-	G4ThreeVector pos_coating = G4ThreeVector(0, 0, (fKathodeThickness + fCoatingThickness)/2.);
+	G4ThreeVector pos_coating = pos_kathode + G4ThreeVector(0, 0, (fKathodeThickness + fCoatingThickness)/2.);
 	G4Box* solid_coating = new G4Box("Coating", .5*sizeXY_coating, .5*sizeXY_coating, .5*fCoatingThickness);
 	fLogicCoating = new G4LogicalVolume(solid_coating, mat_coating, "Coating");
 	G4VisAttributes* visatt_coating = new G4VisAttributes(G4Colour(1., 1., 0., .5));
@@ -62,7 +62,24 @@ G4VPhysicalVolume* DetectorConstruction::Construct() {
 	fLogicCoating->SetVisAttributes(visatt_coating);
 	new G4PVPlacement(0, pos_coating, fLogicCoating, "Coating", fLogicWorld, false, 0, checkOverlaps);
 
+	// Detector
+	G4double sizeXY_detector = sizeXY_world;
+	G4double sizeZ_detector = .5*sizeZ_world - fKathodeThickness - fCoatingThickness;
+	G4Material* mat_detector = nist->FindOrBuildMaterial("G4_Ar"); // TODO: replace with argon/CO2 mixture
+
+	G4ThreeVector pos_detector = pos_coating + G4ThreeVector(0, 0, (fCoatingThickness + sizeZ_detector)/2.);
+	G4Box* solid_detector = new G4Box("Detector", .5*sizeXY_detector, .5*sizeXY_detector, .5*sizeZ_detector);
+	fLogicDetector = new G4LogicalVolume(solid_detector, mat_detector, "Detector");
+	G4VisAttributes* visatt_detector = new G4VisAttributes(G4Colour(1., 1., 1.));
+	visatt_detector->SetForceWireframe(true);
+	fLogicDetector->SetVisAttributes(visatt_detector);
+	new G4PVPlacement(0, pos_detector, fLogicDetector, "Detector", fLogicWorld, false, 0, checkOverlaps);
+
 	return fPhysWorld;
+}
+
+G4VPhysicalVolume* DetectorConstruction::GetDetectorVolume() {
+	return fPhysDetector;
 }
 
 void DetectorConstruction::SetKathodeThickness(G4double val) {

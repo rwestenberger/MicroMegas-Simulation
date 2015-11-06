@@ -1,17 +1,20 @@
 #ifndef ActionInitialization_h
 #define ActionInitialization_h 1
 
-#include "G4VUserActionInitialization.hh"
+#include "DetectorConstruction.hpp"
 
-/// Action initialization class.
+#include "G4VUserActionInitialization.hh"
 
 class ActionInitialization : public G4VUserActionInitialization {
 	public:
-		ActionInitialization();
+		ActionInitialization(DetectorConstruction*);
 		virtual ~ActionInitialization();
 
 		virtual void BuildForMaster() const;
 		virtual void Build() const;
+
+	private:
+		DetectorConstruction* fDetector;
 };
 
 #endif

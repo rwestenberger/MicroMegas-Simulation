@@ -4,7 +4,7 @@
 #include "G4Event.hh"
 #include "G4RunManager.hh"
 
-EventAction::EventAction() : G4UserEventAction() {} 
+EventAction::EventAction() : G4UserEventAction() {}
 
 EventAction::~EventAction() {}
 

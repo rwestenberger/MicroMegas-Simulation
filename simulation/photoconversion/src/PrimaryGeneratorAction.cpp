@@ -28,8 +28,9 @@ PrimaryGeneratorAction::~PrimaryGeneratorAction() {
 }
 
 void PrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent) {
-	G4double x0 = (G4UniformRand()-.5)*10*cm;
-	G4double y0 = (G4UniformRand()-.5)*10*cm;
+	//G4double x0 = (G4UniformRand()-.5)*10*cm;
+	//G4double y0 = (G4UniformRand()-.5)*10*cm;
+	G4double x0 = 0, y0 = 0;
 	G4double z0 = -0.5*cm;
 	fParticleGun->SetParticlePosition(G4ThreeVector(x0,y0,z0));
 	

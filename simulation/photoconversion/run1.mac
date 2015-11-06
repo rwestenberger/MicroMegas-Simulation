@@ -17,12 +17,12 @@
 /run/initialize
 
 # verbosity settings
-/control/verbose 2
+#/control/verbose 2
 /run/verbose 2
-/event/verbose 0
-/tracking/verbose 1
+#/event/verbose 0
+#/tracking/verbose 1
 
 # run simulation
 /gun/particle gamma
-/gun/energy 200 keV
-/run/beamOn 100
+/gun/energy 50 keV
+/run/beamOn 1000000

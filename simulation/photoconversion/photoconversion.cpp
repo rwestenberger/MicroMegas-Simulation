@@ -1,5 +1,6 @@
 #include "DetectorConstruction.hpp"
 #include "ActionInitialization.hpp"
+#include "HistManager.hpp"
 #include "PhysicsList.hpp"
 
 #ifdef G4MULTITHREADED
@@ -35,10 +36,11 @@ int main(int argc,char** argv) {
 	// Set mandatory initialization classes
 	//
 	runManager->SetUserInitialization(new PhysicsList);
-	runManager->SetUserInitialization(new DetectorConstruction());
-		
+	DetectorConstruction* detectorConstruction = new DetectorConstruction();
+	runManager->SetUserInitialization(detectorConstruction);
+
 	// User action initialization
-	runManager->SetUserInitialization(new ActionInitialization());
+	runManager->SetUserInitialization(new ActionInitialization(detectorConstruction));
 	
 	// Initialize visualization
 	//

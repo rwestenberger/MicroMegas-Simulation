@@ -34,7 +34,7 @@
 PhysicsList::PhysicsList() : G4VModularPhysicsList(), fEmPhysicsList(0), fDecayPhysicsList(0), fStepMaxProcess(0), fMessenger(0), fPAI(false) {
 	G4EmParameters::Instance()->SetVerbose(1);
 
-	SetDefaultCutValue(0.1*mm);
+	SetDefaultCutValue(1*mm);
  
 	fMessenger = new PhysicsListMessenger(this);
 

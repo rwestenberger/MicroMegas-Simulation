@@ -17,6 +17,9 @@ endif()
 include(${Geant4_USE_FILE})
 include_directories(${PROJECT_SOURCE_DIR}/include)
 
+EXECUTE_PROCESS(COMMAND root-config --cflags OUTPUT_VARIABLE ROOT_CXX_FLAGS OUTPUT_STRIP_TRAILING_WHITESPACE)
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${ROOT_CXX_FLAGS}")
+
 # Locate sources and headers for this project
 # NB: headers are included so they will show up in IDEs
 file(GLOB sources ${PROJECT_SOURCE_DIR}/src/*.cpp)
@@ -24,6 +27,8 @@ file(GLOB headers ${PROJECT_SOURCE_DIR}/include/*.hpp)
 
 # Add the executable, and link it to the Geant4 libraries
 add_executable(photoconversion photoconversion.cpp ${sources} ${headers})
+EXECUTE_PROCESS(COMMAND root-config --libs OUTPUT_VARIABLE ROOT_LD_FLAGS OUTPUT_STRIP_TRAILING_WHITESPACE)
+set(CMAKE_EXE_LINKER_FLAGS ${ROOT_LD_FLAGS})
 target_link_libraries(photoconversion ${Geant4_LIBRARIES})
 
 # For internal Geant4 use - but has no effect if you build this

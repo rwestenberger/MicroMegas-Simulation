@@ -9,17 +9,22 @@
 #include "G4UnitsTable.hh"
 #include "G4SystemOfUnits.hh"
 
-RunAction::RunAction() : G4UserRunAction() {}
+#include <TFile.h>
+#include <TH1F.h>
+
+RunAction::RunAction(HistManager* histManager) : G4UserRunAction(), fHistManager(histManager) {}
 
 RunAction::~RunAction() {}
 
 G4Run* RunAction::GenerateRun() {
-	return new Run; 
+	return new Run;
 }
 
-void RunAction::BeginOfRunAction(const G4Run*) { 
+void RunAction::BeginOfRunAction(const G4Run*) {
 	//inform the runManager to save random number seed
 	G4RunManager::GetRunManager()->SetRandomNumberStore(false);
+
+	fHistManager->Book();
 }
 
 void RunAction::EndOfRunAction(const G4Run* run) {
@@ -58,4 +63,7 @@ void RunAction::EndOfRunAction(const G4Run* run) {
 		 << "------------------------------------------------------------"
 		 << G4endl
 		 << G4endl;
+
+	fHistManager->PrintStatistic();
+	fHistManager->Save();
 }
