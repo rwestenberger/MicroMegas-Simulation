@@ -21,6 +21,8 @@ class HistManager {
 
 		void FillDirectionHist(G4ThreeVector);
 		void FillEnergyHist(G4double);
+
+		TH1F* GetEnergyHist();
 				
 	private:
 		TFile*   fRootFile;

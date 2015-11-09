@@ -56,13 +56,14 @@ void RunAction::EndOfRunAction(const G4Run* run) {
 		 << "--------------------End of Local Run------------------------";
 	}
 	
+	G4int producedElectrons = fHistManager->GetEnergyHist()->GetEntries();
+
 	G4cout
-		 << G4endl
-		 << " The run consists of " << nofEvents << " "<< runCondition
-		 << G4endl
-		 << "------------------------------------------------------------"
-		 << G4endl
-		 << G4endl;
+		<< G4endl
+		<< nofEvents << " "<< runCondition << G4endl
+		<< "Electron conversion efficiency: " << (G4double)producedElectrons / nofEvents * 100. << "%" << G4endl
+		<< "------------------------------------------------------------"
+		<< G4endl;
 
 	fHistManager->PrintStatistic();
 	fHistManager->Save();

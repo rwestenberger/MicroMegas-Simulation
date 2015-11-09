@@ -16,8 +16,8 @@
 DetectorConstruction::DetectorConstruction() : G4VUserDetectorConstruction(), fDetectorMessenger(0) {
 	fDetectorMessenger = new DetectorMessenger(this);
 
-	fKathodeThickness = .2*mm;
-	fCoatingThickness = .1*mm;
+	fKathodeThickness = .2*mm; // can be overwritten by /MM/setKathodeThickness
+	fCoatingThickness = .1*mm; // can be overwritten by /MM/setCoatingThickness
 }
 
 DetectorConstruction::~DetectorConstruction() {
