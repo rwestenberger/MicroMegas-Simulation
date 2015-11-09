@@ -7,6 +7,7 @@
 #include "G4Event.hh"
 #include "G4RunManager.hh"
 #include "G4LogicalVolume.hh"
+#include "G4SystemOfUnits.hh"
 
 SteppingAction::SteppingAction(EventAction* eventAction, DetectorConstruction* detector, HistManager* histManager) : G4UserSteppingAction(), fEventAction(eventAction), fDetector(detector), fHistManager(histManager) {}
 
@@ -23,7 +24,7 @@ void SteppingAction::UserSteppingAction(const G4Step* step) {
 			if (particle->GetParticleType() != "gamma") {
 				G4ThreeVector dir = track->GetMomentumDirection();
 				fHistManager->FillDirectionHist(dir);
-				fHistManager->FillEnergyHist(track->GetKineticEnergy());
+				fHistManager->FillEnergyHist(track->GetKineticEnergy()/keV);
 			}
 		}
 	}
