@@ -16,11 +16,11 @@ Assuming you are in the photoconversion simulation directory:
 
 	`make && make install`
 
-4. Run simulation:
+4. Run simulation interactively or with macro file:
 
-	`../bin/photoconversion`
+	`../bin/photoconversion [file.mac]`
 
-5. Init visualisation:
+5. If run interactively you might want to init visualisation:
 
 	`/control/execute vis.mac`
 
