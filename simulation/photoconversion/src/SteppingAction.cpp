@@ -9,23 +9,22 @@
 #include "G4LogicalVolume.hh"
 #include "G4SystemOfUnits.hh"
 
-SteppingAction::SteppingAction(EventAction* eventAction, DetectorConstruction* detector, HistManager* histManager) : G4UserSteppingAction(), fEventAction(eventAction), fDetector(detector), fHistManager(histManager) {}
+SteppingAction::SteppingAction(EventAction* eventAction, DetectorConstruction* detector, OutputManager* outManager) : G4UserSteppingAction(), fEventAction(eventAction), fDetector(detector), fOutputManager(outManager) {}
 
 SteppingAction::~SteppingAction() {}
 
 void SteppingAction::UserSteppingAction(const G4Step* step) {
-	G4VPhysicalVolume* volume = step->GetPostStepPoint()->GetTouchableHandle()->GetVolume();
+	G4VPhysicalVolume* preVolume = step->GetPreStepPoint()->GetTouchableHandle()->GetVolume();
+	G4VPhysicalVolume* postVolume = step->GetPostStepPoint()->GetTouchableHandle()->GetVolume();
 
 	G4Track* track = step->GetTrack();
 
-	if (volume == fDetector->GetDetectorVolume() && step->IsLastStepInVolume()) { // first time in detector volume
-		if (track->GetTrackID() > 1) { // secondary particle
-			const G4ParticleDefinition* particle = track->GetParticleDefinition();
-			if (particle->GetParticleType() != "gamma") {
-				G4ThreeVector dir = track->GetMomentumDirection();
-				fHistManager->FillDirectionHist(dir);
-				fHistManager->FillEnergyHist(track->GetKineticEnergy()/keV);
-			}
+	if (preVolume != fDetector->GetDetectorVolume() && postVolume == fDetector->GetDetectorVolume()) { // in detector volume
+		const G4ParticleDefinition* particle = track->GetParticleDefinition();
+		if (particle->GetParticleType() != "gamma") {
+			G4ThreeVector direction = track->GetMomentumDirection();
+			G4ThreeVector vertexPosition = track->GetVertexPosition();
+			fOutputManager->FillEvent(direction, track->GetKineticEnergy(), vertexPosition);
 		}
 	}
 }

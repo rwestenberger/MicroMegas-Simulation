@@ -1,7 +1,7 @@
 #ifndef RunAction_h
 #define RunAction_h 1
 
-#include "HistManager.hpp"
+#include "OutputManager.hpp"
 
 #include "G4UserRunAction.hh"
 #include "globals.hh"
@@ -11,7 +11,7 @@ class G4LogicalVolume;
 
 class RunAction : public G4UserRunAction {
 	public:
-		RunAction(HistManager*);
+		RunAction(OutputManager*);
 		virtual ~RunAction();
 
 		virtual G4Run* GenerateRun();
@@ -19,7 +19,7 @@ class RunAction : public G4UserRunAction {
 		virtual void   EndOfRunAction(const G4Run*);
 
 	private:
-		HistManager* fHistManager;
+		OutputManager* fOutputManager;
 };
 
 #endif

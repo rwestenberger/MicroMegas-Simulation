@@ -1,6 +1,6 @@
 #include "DetectorConstruction.hpp"
 #include "ActionInitialization.hpp"
-#include "HistManager.hpp"
+#include "OutputManager.hpp"
 #include "PhysicsList.hpp"
 
 #ifdef G4MULTITHREADED

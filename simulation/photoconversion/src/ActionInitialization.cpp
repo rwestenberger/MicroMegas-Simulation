@@ -1,6 +1,6 @@
 #include "ActionInitialization.hpp"
 #include "DetectorConstruction.hpp"
-#include "HistManager.hpp"
+#include "OutputManager.hpp"
 #include "PrimaryGeneratorAction.hpp"
 #include "RunAction.hpp"
 #include "EventAction.hpp"
@@ -11,19 +11,19 @@ ActionInitialization::ActionInitialization(DetectorConstruction* detector) : G4V
 ActionInitialization::~ActionInitialization() {}
 
 void ActionInitialization::BuildForMaster() const {
-	HistManager* histManager = new HistManager();
+	OutputManager* outManager = new OutputManager();
 
-	SetUserAction(new RunAction(histManager));
+	SetUserAction(new RunAction(outManager));
 }
 
 void ActionInitialization::Build() const {
-	HistManager* histManager = new HistManager();
+	OutputManager* outManager = new OutputManager();
 
 	SetUserAction(new PrimaryGeneratorAction);
-	SetUserAction(new RunAction(histManager));
+	SetUserAction(new RunAction(outManager));
 	
 	EventAction* eventAction = new EventAction;
 	SetUserAction(eventAction);
 	
-	SetUserAction(new SteppingAction(eventAction, fDetector, histManager));
+	SetUserAction(new SteppingAction(eventAction, fDetector, outManager));
 }  

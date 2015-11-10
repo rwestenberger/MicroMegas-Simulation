@@ -12,7 +12,7 @@
 #include <TFile.h>
 #include <TH1F.h>
 
-RunAction::RunAction(HistManager* histManager) : G4UserRunAction(), fHistManager(histManager) {}
+RunAction::RunAction(OutputManager* outManager) : G4UserRunAction(), fOutputManager(outManager) {}
 
 RunAction::~RunAction() {}
 
@@ -24,7 +24,7 @@ void RunAction::BeginOfRunAction(const G4Run*) {
 	//inform the runManager to save random number seed
 	G4RunManager::GetRunManager()->SetRandomNumberStore(false);
 
-	fHistManager->Book();
+	fOutputManager->Initialize();
 }
 
 void RunAction::EndOfRunAction(const G4Run* run) {
@@ -56,7 +56,7 @@ void RunAction::EndOfRunAction(const G4Run* run) {
 		 << "--------------------End of Local Run------------------------";
 	}
 	
-	G4int producedElectrons = fHistManager->GetEnergyHist()->GetEntries();
+	G4int producedElectrons = fOutputManager->GetEntries();
 
 	G4cout
 		<< G4endl
@@ -65,6 +65,6 @@ void RunAction::EndOfRunAction(const G4Run* run) {
 		<< "------------------------------------------------------------"
 		<< G4endl;
 
-	fHistManager->PrintStatistic();
-	fHistManager->Save();
+	fOutputManager->PrintStatistic();
+	fOutputManager->Save();
 }

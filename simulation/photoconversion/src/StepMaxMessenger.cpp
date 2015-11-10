@@ -5,7 +5,7 @@
 #include "globals.hh"
 
 StepMaxMessenger::StepMaxMessenger(StepMax* stepM) : G4UImessenger(), fStepMax(stepM), fStepMaxCmd(0) { 
-	fStepMaxCmd = new G4UIcmdWithADoubleAndUnit("/MM/stepmax", this);
+	fStepMaxCmd = new G4UIcmdWithADoubleAndUnit("/MM/maxStep", this);
 	fStepMaxCmd->SetGuidance("Set max allowed step length.");
 	fStepMaxCmd->SetParameterName("maxStep", false);
 	fStepMaxCmd->SetRange("maxStep>0.");

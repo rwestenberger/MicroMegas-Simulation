@@ -6,17 +6,17 @@
 #include "G4UIcmdWithADoubleAndUnit.hh"
 #include "G4UIcmdWithoutParameter.hh"
 
-DetectorMessenger::DetectorMessenger(DetectorConstruction* det) : G4UImessenger(), fDetector(det), fDetDir(0), fKathThickCmd(0), fCoatThickCmd(0), fCoatMaterCmd(0), fIonCmd(0) {
+DetectorMessenger::DetectorMessenger(DetectorConstruction* det) : G4UImessenger(), fDetector(det), fDetDir(0), fCaptThickCmd(0), fCoatThickCmd(0), fCoatMaterCmd(0), fIonCmd(0) {
 	fDetDir = new G4UIdirectory("/MM/");
 	fDetDir->SetGuidance("Detector control.");
 
-	fKathThickCmd = new G4UIcmdWithADoubleAndUnit("/MM/setKathodeThickness", this);
-	fKathThickCmd->SetGuidance("Set thickness of the kathode.");
-	fKathThickCmd->SetParameterName("thicknessKathode", false, false);
-	fKathThickCmd->SetUnitCategory("Length");
-	fKathThickCmd->SetDefaultUnit("mm");
-	fKathThickCmd->SetRange("thicknessKathode>0.");
-	fKathThickCmd->AvailableForStates(G4State_PreInit, G4State_Idle);
+	fCaptThickCmd = new G4UIcmdWithADoubleAndUnit("/MM/setKaptonThickness", this);
+	fCaptThickCmd->SetGuidance("Set thickness of the kapton.");
+	fCaptThickCmd->SetParameterName("thicknessKapton", false, false);
+	fCaptThickCmd->SetUnitCategory("Length");
+	fCaptThickCmd->SetDefaultUnit("mm");
+	fCaptThickCmd->SetRange("thicknessKapton>0.");
+	fCaptThickCmd->AvailableForStates(G4State_PreInit, G4State_Idle);
 
 	fCoatThickCmd = new G4UIcmdWithADoubleAndUnit("/MM/setCoatingThickness", this);
 	fCoatThickCmd->SetGuidance("Set thickness of the coating.");
@@ -42,7 +42,7 @@ DetectorMessenger::DetectorMessenger(DetectorConstruction* det) : G4UImessenger(
 }
 
 DetectorMessenger::~DetectorMessenger() {
-	delete fKathThickCmd;
+	delete fCaptThickCmd;
 	delete fCoatThickCmd;
 	delete fCoatMaterCmd;
 	delete fIonCmd;
@@ -50,8 +50,8 @@ DetectorMessenger::~DetectorMessenger() {
 }
 
 void DetectorMessenger::SetNewValue(G4UIcommand* command, G4String newValue) {
-	if (command == fKathThickCmd) {
-		fDetector->SetKathodeThickness(fKathThickCmd->GetNewDoubleValue(newValue));
+	if (command == fCaptThickCmd) {
+		fDetector->SetKaptonThickness(fCaptThickCmd->GetNewDoubleValue(newValue));
 	} else if (command == fCoatThickCmd) {
 		fDetector->SetCoatingThickness(fCoatThickCmd->GetNewDoubleValue(newValue));
 	} else if (command == fCoatMaterCmd) {

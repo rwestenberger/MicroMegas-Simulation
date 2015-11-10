@@ -21,7 +21,7 @@ class DetectorConstruction : public G4VUserDetectorConstruction {
 
 		G4VPhysicalVolume* GetDetectorVolume();
 
-		void SetKathodeThickness(G4double);
+		void SetKaptonThickness(G4double);
 		void SetCoatingThickness(G4double);
 		void SetCoatingMaterial(const G4String&);
 
@@ -30,7 +30,7 @@ class DetectorConstruction : public G4VUserDetectorConstruction {
 	private:
 		DetectorMessenger* fDetectorMessenger;
 
-		G4double           fKathodeThickness;
+		G4double           fKaptonThickness;
 		G4double           fCoatingThickness;
 		G4Material*        fCoatingMaterial;
 

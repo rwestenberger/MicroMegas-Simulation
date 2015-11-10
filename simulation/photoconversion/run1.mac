@@ -5,24 +5,26 @@
 #/run/numberOfWorkers 4
 
 # Change Micromegas setup parameters
-#/MM/setKathodeThickness 0.2 mm
-#/MM/setCoatingThickness 0.1 mm
-#/MM/setCoatingMaterial G4_Au
+/MM/setKaptonThickness 10 um
+/MM/setCoatingThickness 15 um
+/MM/setCoatingMaterial G4_Au
 
 # Change simulation parameters
-#/MM/setPairEnergy 19 eV
-/MM/stepmax 0.1 mm
+/MM/maxStep 0.1 mm
+/run/setCut 1 mm
 
+# Random seeds
+/random/setSeeds 1309865601 1309865603
 
 /run/initialize
 
 # verbosity settings
 #/control/verbose 2
-/run/verbose 2
-#/event/verbose 0
+/run/verbose 1
+#/event/verbose 1
 #/tracking/verbose 1
 
 # run simulation
 /gun/particle gamma
-/gun/energy 50 keV
-/run/beamOn 1000000
+/gun/energy 60 keV
+/run/beamOn 3000000

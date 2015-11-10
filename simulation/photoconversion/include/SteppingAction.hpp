@@ -1,7 +1,7 @@
 #ifndef SteppingAction_h
 #define SteppingAction_h 1
 
-#include "HistManager.hpp"
+#include "OutputManager.hpp"
 #include "DetectorConstruction.hpp"
 
 #include "G4UserSteppingAction.hh"
@@ -15,7 +15,7 @@ class G4LogicalVolume;
 
 class SteppingAction : public G4UserSteppingAction {
 	public:
-		SteppingAction(EventAction*, DetectorConstruction*, HistManager*);
+		SteppingAction(EventAction*, DetectorConstruction*, OutputManager*);
 		virtual ~SteppingAction();
 
 		// method from the base class
@@ -24,7 +24,7 @@ class SteppingAction : public G4UserSteppingAction {
 	private:
 		EventAction*  fEventAction;
 		DetectorConstruction* fDetector;
-		HistManager*  fHistManager;
+		OutputManager*  fOutputManager;
 };
 
 #endif

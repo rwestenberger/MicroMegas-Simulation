@@ -21,7 +21,7 @@ class DetectorMessenger: public G4UImessenger {
 		DetectorConstruction*      fDetector;
 		G4UIdirectory*             fDetDir;
 
-		G4UIcmdWithADoubleAndUnit* fKathThickCmd;
+		G4UIcmdWithADoubleAndUnit* fCaptThickCmd;
 		G4UIcmdWithADoubleAndUnit* fCoatThickCmd;
 		G4UIcmdWithAString*        fCoatMaterCmd;
 		G4UIcmdWithADoubleAndUnit* fIonCmd;
