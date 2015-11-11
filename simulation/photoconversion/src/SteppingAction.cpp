@@ -20,11 +20,13 @@ void SteppingAction::UserSteppingAction(const G4Step* step) {
 	G4Track* track = step->GetTrack();
 
 	if (preVolume != fDetector->GetDetectorVolume() && postVolume == fDetector->GetDetectorVolume()) { // in detector volume
-		const G4ParticleDefinition* particle = track->GetParticleDefinition();
-		if (particle->GetParticleType() != "gamma") {
-			G4ThreeVector direction = track->GetMomentumDirection();
-			G4ThreeVector vertexPosition = track->GetVertexPosition();
-			fOutputManager->FillEvent(direction, track->GetKineticEnergy(), vertexPosition);
+		if (track->GetParentID() == 1) { // only get primary electron
+			const G4ParticleDefinition* particle = track->GetParticleDefinition();
+			if (particle->GetParticleType() == "lepton") {
+				//G4ThreeVector direction = track->GetMomentumDirection();
+				//G4ThreeVector vertexPosition = track->GetVertexPosition();
+				fOutputManager->FillEvent(track); //direction, track->GetKineticEnergy(), vertexPosition);
+			}
 		}
 	}
 }

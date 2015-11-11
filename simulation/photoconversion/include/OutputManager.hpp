@@ -1,6 +1,7 @@
 #ifndef OutputManager_h
 #define OutputManager_h 1
 
+#include "G4Track.hh"
 #include "G4ThreeVector.hh"
 #include "globals.hh"
 
@@ -20,7 +21,7 @@ class OutputManager {
 		void PrintStatistic();
 		G4int GetEntries();
 
-		void FillEvent(G4ThreeVector, G4double, G4ThreeVector);
+		void FillEvent(G4Track*); //G4ThreeVector, G4double, G4ThreeVector);
 				
 	private:
 		TFile*   fRootFile;
@@ -30,6 +31,7 @@ class OutputManager {
 		G4double fTheta;
 		G4double fEkin;
 		G4double fZorigin;
+		G4double fTrackLength;
 };
 
 #endif

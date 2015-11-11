@@ -1,5 +1,6 @@
 #include "OutputManager.hpp"
 
+#include "G4Track.hh"
 #include "G4ThreeVector.hh"
 #include "G4PhysicalConstants.hh"
 #include "G4SystemOfUnits.hh"
@@ -7,7 +8,7 @@
 #include <TFile.h>
 #include <TTree.h>
 
-OutputManager::OutputManager() : fRootFile(0), fPhi(0), fTheta(0), fEkin(0), fZorigin(0) { }
+OutputManager::OutputManager() : fRootFile(0), fPhi(0), fTheta(0), fEkin(0), fZorigin(0), fTrackLength(0) { }
 
 OutputManager::~OutputManager() {
 	if (fRootFile) delete fRootFile;
@@ -27,6 +28,7 @@ void OutputManager::Initialize() {
 	fOutputTree->Branch("theta", &fTheta, "theta/D"); // theta angle to z axis
 	fOutputTree->Branch("Ekin", &fEkin, "Ekin/D"); // kinetic energy
 	fOutputTree->Branch("Zorigin", &fZorigin, "Zorigin/D"); // z value of the vertex position (track creation point)
+	fOutputTree->Branch("TrackLength", &fTrackLength, "TrackLengh/D");
 
 	G4cout << "\n----> Output file is opened in " << fileName << G4endl;
 }
@@ -39,11 +41,14 @@ void OutputManager::Save() {
 	}
 }
 
-void OutputManager::FillEvent(G4ThreeVector dir, G4double Ekin, G4ThreeVector vertexPos) {
+void OutputManager::FillEvent(G4Track* track) { //G4ThreeVector dir, G4double Ekin, G4ThreeVector vertexPos) {
+	G4ThreeVector dir = track->GetMomentumDirection();
 	fPhi = dir.getPhi();
 	fTheta = dir.getTheta();
-	fEkin = Ekin/keV;
+	fEkin = track->GetKineticEnergy()/keV;
+	G4ThreeVector vertexPos = track->GetVertexPosition();
 	fZorigin = vertexPos.z()/um;
+	fTrackLength = track->GetTrackLength()/um;
 	if (fOutputTree) fOutputTree->Fill();
 }
 
