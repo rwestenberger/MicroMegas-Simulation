@@ -1,6 +1,7 @@
 #ifndef RunAction_h
 #define RunAction_h 1
 
+#include "Run.hpp"
 #include "OutputManager.hpp"
 
 #include "G4UserRunAction.hh"
@@ -20,6 +21,8 @@ class RunAction : public G4UserRunAction {
 
 	private:
 		OutputManager* fOutputManager;
+
+		Run* fRun;
 };
 
 #endif

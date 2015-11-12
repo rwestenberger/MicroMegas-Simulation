@@ -17,12 +17,13 @@ RunAction::RunAction(OutputManager* outManager) : G4UserRunAction(), fOutputMana
 RunAction::~RunAction() {}
 
 G4Run* RunAction::GenerateRun() {
-	return new Run;
+	fRun = new Run();
+	return fRun;
 }
 
 void RunAction::BeginOfRunAction(const G4Run*) {
-	//inform the runManager to save random number seed
-	G4RunManager::GetRunManager()->SetRandomNumberStore(false);
+	//G4RunManager::GetRunManager()->SetRandomNumberStore(true);
+	if (isMaster) G4Random::showEngineStatus();
 
 	fOutputManager->Initialize();
 }
@@ -43,10 +44,10 @@ void RunAction::EndOfRunAction(const G4Run* run) {
 		G4double particleEnergy = particleGun->GetParticleEnergy();
 		runCondition += G4BestUnit(particleEnergy, "Energy");
 	}
-				
+
 	// Print
-	//  
 	if (IsMaster()) {
+		fRun->EndOfRun();
 		G4cout
 		 << G4endl
 		 << "--------------------End of Global Run-----------------------";
@@ -56,12 +57,15 @@ void RunAction::EndOfRunAction(const G4Run* run) {
 		 << "--------------------End of Local Run------------------------";
 	}
 	
-	G4int producedElectrons = fOutputManager->GetEntries();
+	G4int coatingConversionElectrons = fOutputManager->GetCoatingTree()->GetEntries();
+	G4int gasConversionElectrons = fOutputManager->GetDetectorTree()->GetEntries();
 
 	G4cout
 		<< G4endl
 		<< nofEvents << " "<< runCondition << G4endl
-		<< "Electron conversion efficiency: " << (G4double)producedElectrons / nofEvents * 100. << "%" << G4endl
+		<< "Electron conversion efficiency: " << G4endl
+		<< "  From coating conversion: " << (G4double)coatingConversionElectrons / nofEvents * 100. << "%" << G4endl
+		<< "  From     gas conversion: " << (G4double)gasConversionElectrons / nofEvents * 100. << "%" << G4endl
 		<< "------------------------------------------------------------"
 		<< G4endl;
 
