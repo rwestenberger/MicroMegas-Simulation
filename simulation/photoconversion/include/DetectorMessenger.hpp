@@ -24,6 +24,8 @@ class DetectorMessenger: public G4UImessenger {
 		G4UIcmdWithADoubleAndUnit* fCaptThickCmd;
 		G4UIcmdWithADoubleAndUnit* fCoatThickCmd;
 		G4UIcmdWithAString*        fCoatMaterCmd;
+		G4UIcmdWithADoubleAndUnit* fDetThickCmd;
+		G4UIcmdWithAString*        fDetMaterCmd;
 		G4UIcmdWithADoubleAndUnit* fIonCmd;
 };
 

@@ -6,7 +6,7 @@
 #include "G4UIcmdWithADoubleAndUnit.hh"
 #include "G4UIcmdWithoutParameter.hh"
 
-DetectorMessenger::DetectorMessenger(DetectorConstruction* det) : G4UImessenger(), fDetector(det), fDetDir(0), fCaptThickCmd(0), fCoatThickCmd(0), fCoatMaterCmd(0), fIonCmd(0) {
+DetectorMessenger::DetectorMessenger(DetectorConstruction* det) : G4UImessenger(), fDetector(det), fDetDir(0), fCaptThickCmd(0), fCoatThickCmd(0), fCoatMaterCmd(0), fDetThickCmd(0), fDetMaterCmd(0), fIonCmd(0) {
 	fDetDir = new G4UIdirectory("/MM/");
 	fDetDir->SetGuidance("Detector control.");
 
@@ -32,6 +32,20 @@ DetectorMessenger::DetectorMessenger(DetectorConstruction* det) : G4UImessenger(
 	fCoatMaterCmd->SetDefaultValue("empty");
 	fCoatMaterCmd->AvailableForStates(G4State_PreInit, G4State_Idle);
 
+	fDetThickCmd = new G4UIcmdWithADoubleAndUnit("/MM/setDetectorThickness", this);
+	fDetThickCmd->SetGuidance("Set thickness of the detector.");
+	fDetThickCmd->SetParameterName("thicknessDetector", false, false);
+	fDetThickCmd->SetUnitCategory("Length");
+	fDetThickCmd->SetDefaultUnit("mm");
+	fDetThickCmd->SetRange("thicknessDetector>0.");
+	fDetThickCmd->AvailableForStates(G4State_PreInit, G4State_Idle);
+
+	fDetMaterCmd = new G4UIcmdWithAString("/MM/setDetectorMaterial",this);
+	fDetMaterCmd->SetGuidance("Select material of the detector.");
+	fDetMaterCmd->SetParameterName("materialDetector", true);
+	fDetMaterCmd->SetDefaultValue("empty");
+	fDetMaterCmd->AvailableForStates(G4State_PreInit, G4State_Idle);
+
 	fIonCmd = new G4UIcmdWithADoubleAndUnit("/MM/setPairEnergy",this);
 	fIonCmd->SetGuidance("Set energy per electron-ion pair for detector");
 	fIonCmd->SetParameterName("en", false, false);
@@ -56,6 +70,10 @@ void DetectorMessenger::SetNewValue(G4UIcommand* command, G4String newValue) {
 		fDetector->SetCoatingThickness(fCoatThickCmd->GetNewDoubleValue(newValue));
 	} else if (command == fCoatMaterCmd) {
 		fDetector->SetCoatingMaterial(newValue);
+	} else if (command == fDetThickCmd) {
+		fDetector->SetDetectorThickness(fDetThickCmd->GetNewDoubleValue(newValue));
+	} else if (command == fDetMaterCmd) {
+		fDetector->SetDetectorMaterial(newValue);
 	} else if (command == fIonCmd) {
 		fDetector->SetPairEnergy(fIonCmd->GetNewDoubleValue(newValue));
 	}

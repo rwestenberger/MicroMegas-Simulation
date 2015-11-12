@@ -18,6 +18,7 @@ DetectorConstruction::DetectorConstruction() : G4VUserDetectorConstruction(), fD
 
 	fKaptonThickness = .2*mm; // can be overwritten by /MM/setKaptonThickness
 	fCoatingThickness = .1*mm; // can be overwritten by /MM/setCoatingThickness
+	fDetectorThickness = 1*cm; // can be overwritten by /MM/setDetectorThickness
 }
 
 DetectorConstruction::~DetectorConstruction() {
@@ -30,8 +31,8 @@ G4VPhysicalVolume* DetectorConstruction::Construct() {
 	G4bool checkOverlaps = true;
 
 	// World
-	G4double sizeXY_world = 1*cm;
-	G4double sizeZ_world  = 1*cm;
+	G4double sizeXY_world = 5*cm;
+	G4double sizeZ_world  = 2.*(fKaptonThickness + fCoatingThickness + fDetectorThickness);
 	G4Material* mat_air = nist->FindOrBuildMaterial("G4_AIR");
 
 	G4Box* solid_world = new G4Box("World", .5*sizeXY_world, .5*sizeXY_world, .5*sizeZ_world);
@@ -48,7 +49,7 @@ G4VPhysicalVolume* DetectorConstruction::Construct() {
 	G4VisAttributes* visatt_kathode = new G4VisAttributes(G4Colour(1., .64, .08, .5));
 	//visatt_kathode->SetForceWireframe(true);
 	fLogicKathode->SetVisAttributes(visatt_kathode);
-	new G4PVPlacement(0, pos_kathode, fLogicKathode, "Kathode", fLogicWorld, false, 0, checkOverlaps);
+	fPhysKathode = new G4PVPlacement(0, pos_kathode, fLogicKathode, "Kathode", fLogicWorld, false, 0, checkOverlaps);
 
 	// Coating
 	G4double sizeXY_coating = sizeXY_kathode;
@@ -63,15 +64,17 @@ G4VPhysicalVolume* DetectorConstruction::Construct() {
 	G4VisAttributes* visatt_coating = new G4VisAttributes(G4Colour(1., 1., 0., .5));
 	//visatt_coating->SetForceWireframe(true);
 	fLogicCoating->SetVisAttributes(visatt_coating);
-	new G4PVPlacement(0, pos_coating, fLogicCoating, "Coating", fLogicWorld, false, 0, checkOverlaps);
+	fPhysCoating = new G4PVPlacement(0, pos_coating, fLogicCoating, "Coating", fLogicWorld, false, 0, checkOverlaps);
 
 	// Detector
 	G4double sizeXY_detector = sizeXY_world;
-	G4double sizeZ_detector = .5*sizeZ_world - fKaptonThickness - fCoatingThickness;
-	G4Material* mat_detector = nist->FindOrBuildMaterial("G4_Ar"); // TODO: replace with argon/CO2 mixture
+	//G4double sizeZ_detector = .5*sizeZ_world - fKaptonThickness - fCoatingThickness;
+	G4Material* mat_detector;
+	if (fDetectorMaterial) mat_detector = fDetectorMaterial;
+	else mat_detector = nist->FindOrBuildMaterial("G4_Ar");
 
-	G4ThreeVector pos_detector = pos_coating + G4ThreeVector(0, 0, (fCoatingThickness + sizeZ_detector)/2.);
-	G4Box* solid_detector = new G4Box("Detector", .5*sizeXY_detector, .5*sizeXY_detector, .5*sizeZ_detector);
+	G4ThreeVector pos_detector = pos_coating + G4ThreeVector(0, 0, (fCoatingThickness + fDetectorThickness)/2.);
+	G4Box* solid_detector = new G4Box("Detector", .5*sizeXY_detector, .5*sizeXY_detector, .5*fDetectorThickness);
 	fLogicDetector = new G4LogicalVolume(solid_detector, mat_detector, "Detector");
 	G4VisAttributes* visatt_detector = new G4VisAttributes(G4Colour(1., 1., 1.));
 	visatt_detector->SetForceWireframe(true);
@@ -79,10 +82,6 @@ G4VPhysicalVolume* DetectorConstruction::Construct() {
 	fPhysDetector = new G4PVPlacement(0, pos_detector, fLogicDetector, "Detector", fLogicWorld, false, 0, checkOverlaps);
 
 	return fPhysWorld;
-}
-
-G4VPhysicalVolume* DetectorConstruction::GetDetectorVolume() {
-	return fPhysDetector;
 }
 
 void DetectorConstruction::SetKaptonThickness(G4double val) {
@@ -101,6 +100,14 @@ void DetectorConstruction::SetCoatingThickness(G4double val) {
 	}
 }
 
+void DetectorConstruction::SetDetectorThickness(G4double val) {
+	if (fPhysWorld) {
+		G4Exception ("DetectorConstruction::SetDetectorThickness()", "MM", JustWarning, "Attempt to change already constructed geometry is ignored");
+	} else {
+		fDetectorThickness = val;
+	}
+}
+
 void DetectorConstruction::SetCoatingMaterial(const G4String& name) {
 	G4Material* mat = G4Material::GetMaterial(name, false);
 
@@ -111,6 +118,21 @@ void DetectorConstruction::SetCoatingMaterial(const G4String& name) {
 		fCoatingMaterial = mat;
 		if (fLogicCoating) {
 	    	fLogicCoating->SetMaterial(mat); 
+	    	G4RunManager::GetRunManager()->PhysicsHasBeenModified();
+    	}
+	}
+}
+
+void DetectorConstruction::SetDetectorMaterial(const G4String& name) {
+	G4Material* mat = G4Material::GetMaterial(name, false);
+
+	if(!mat) mat = G4NistManager::Instance()->FindOrBuildMaterial(name);
+
+	if (mat) {
+		G4cout << "### New detector material: " << mat->GetName() << G4endl;
+		fDetectorMaterial = mat;
+		if (fLogicDetector) {
+	    	fLogicDetector->SetMaterial(mat); 
 	    	G4RunManager::GetRunManager()->PhysicsHasBeenModified();
     	}
 	}
