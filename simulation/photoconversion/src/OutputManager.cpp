@@ -8,7 +8,7 @@
 #include <TFile.h>
 #include <TTree.h>
 
-OutputManager::OutputManager() : fRootFile(0), fPhi(0), fTheta(0), fEkin(0), fZorigin(0), fTrackLength(0) { }
+OutputManager::OutputManager() : fRootFile(0), fPhiVertex(0), fPhi(0), fTheta(0), fThetaVertex(0), fEkin(0), fEloss(0), fZVertex(0), fTrackLength(0) { }
 
 OutputManager::~OutputManager() {
 	if (fRootFile) delete fRootFile;
@@ -23,12 +23,24 @@ void OutputManager::Initialize() {
 		return;
 	}
 
-	fOutputTree = new TTree("conversionTree", "Conversions");
-	fOutputTree->Branch("phi", &fPhi, "phi/D"); // phi angle
-	fOutputTree->Branch("theta", &fTheta, "theta/D"); // theta angle to z axis
-	fOutputTree->Branch("Ekin", &fEkin, "Ekin/D"); // kinetic energy
-	fOutputTree->Branch("Zorigin", &fZorigin, "Zorigin/D"); // z value of the vertex position (track creation point)
-	fOutputTree->Branch("TrackLength", &fTrackLength, "TrackLengh/D");
+	fCoatingTree = new TTree("coatingTree", "Conversion");
+	fCoatingTree->Branch("phiVertex", &fPhiVertex, "phiVertex/D"); // phi angle at production
+	fCoatingTree->Branch("phi", &fPhi, "phi/D"); // phi angle
+	fCoatingTree->Branch("thetaVertex", &fThetaVertex, "thetaVertex/D"); // theta angle to z axis as production
+	fCoatingTree->Branch("theta", &fTheta, "theta/D"); // theta angle to z axis
+	fCoatingTree->Branch("EkinVertex", &fEkinVertex, "EkinVertex/D"); // kinetic energy at production
+	fCoatingTree->Branch("Ekin", &fEkin, "Ekin/D"); // kinetic energy
+	fCoatingTree->Branch("Eloss", &fEloss, "Eloss/D"); // loss of kinetic energy since production
+	fCoatingTree->Branch("ZVertex", &fZVertex, "ZVertex/D"); // z value of the vertex position (track creation point)
+	fCoatingTree->Branch("TrackLength", &fTrackLength, "TrackLengh/D"); // track length
+
+	fDetectorTree = new TTree("detectorTree", "Conversion");
+	fDetectorTree->Branch("phi", &fPhi, "phi/D"); // phi angle
+	fDetectorTree->Branch("theta", &fTheta, "theta/D"); // theta angle to z axis
+	fDetectorTree->Branch("EkinVertex", &fEkinVertex, "EkinVertex/D");
+	fDetectorTree->Branch("Ekin", &fEkin, "Ekin/D"); // kinetic energy
+	fDetectorTree->Branch("ZVertex", &fZVertex, "ZVertex/D"); // z value of the vertex position (track creation point)
+	fDetectorTree->Branch("TrackLength", &fTrackLength, "TrackLengh/D");
 
 	G4cout << "\n----> Output file is opened in " << fileName << G4endl;
 }
@@ -41,25 +53,25 @@ void OutputManager::Save() {
 	}
 }
 
-void OutputManager::FillEvent(G4Track* track) { //G4ThreeVector dir, G4double Ekin, G4ThreeVector vertexPos) {
+void OutputManager::FillEvent(TTree* tree, G4Track* track) {
+	G4ThreeVector dirVertex = track->GetVertexMomentumDirection();
 	G4ThreeVector dir = track->GetMomentumDirection();
+	fPhiVertex = dirVertex.getPhi();
 	fPhi = dir.getPhi();
+	fThetaVertex = dirVertex.getTheta();
 	fTheta = dir.getTheta();
+	fEkinVertex = track->GetVertexKineticEnergy()/keV;
 	fEkin = track->GetKineticEnergy()/keV;
+	fEloss = track->GetVertexKineticEnergy()/keV - track->GetKineticEnergy()/keV;
 	G4ThreeVector vertexPos = track->GetVertexPosition();
-	fZorigin = vertexPos.z()/um;
+	fZVertex = vertexPos.z()/um;
 	fTrackLength = track->GetTrackLength()/um;
-	if (fOutputTree) fOutputTree->Fill();
-}
-
-G4int OutputManager::GetEntries() {
-	return fOutputTree->GetEntries();
+	if (tree) tree->Fill();
 }
 
 void OutputManager::PrintStatistic() {
-	if(fOutputTree) {
-		G4cout << "--- Tree Stats" << G4endl;
-		G4cout << " N = " << fOutputTree->GetEntries() << G4endl;
-		G4cout << "---" << G4endl;
-	}
+	G4cout << "--- Tree Stats" << G4endl;
+	if(fCoatingTree) G4cout << " N_coating = " << fCoatingTree->GetEntries() << G4endl;
+	if(fDetectorTree) G4cout << " N_detector = " << fDetectorTree->GetEntries() << G4endl;
+	G4cout << "---" << G4endl;
 }

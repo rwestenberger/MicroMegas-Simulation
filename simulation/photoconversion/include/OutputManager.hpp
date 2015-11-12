@@ -19,18 +19,24 @@ class OutputManager {
 		void Initialize();
 		void Save();
 		void PrintStatistic();
-		G4int GetEntries();
+		TTree* GetCoatingTree() { return fCoatingTree; }
+		TTree* GetDetectorTree() { return fDetectorTree; }
 
-		void FillEvent(G4Track*); //G4ThreeVector, G4double, G4ThreeVector);
-				
+		void FillEvent(TTree*, G4Track*);
+
 	private:
 		TFile*   fRootFile;
 
-		TTree*   fOutputTree;
+		TTree*   fCoatingTree;
+		TTree*   fDetectorTree;
+		G4double fPhiVertex;
 		G4double fPhi;
 		G4double fTheta;
+		G4double fThetaVertex;
 		G4double fEkin;
-		G4double fZorigin;
+		G4double fEkinVertex;
+		G4double fEloss;
+		G4double fZVertex;
 		G4double fTrackLength;
 };
 
