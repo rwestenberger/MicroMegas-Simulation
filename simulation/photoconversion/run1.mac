@@ -8,13 +8,15 @@
 /MM/setKaptonThickness 10 um
 /MM/setCoatingThickness 15 um
 /MM/setCoatingMaterial G4_Au
+/MM/setDetectorThickness 1 cm
+/MM/setDetectorMaterial G4_Xe
 
 # Change simulation parameters
-/MM/maxStep 0.1 mm
-/run/setCut 1 mm
+/MM/maxStep 1 um
+/run/setCut 5 um
 
 # Random seeds
-/random/setSeeds 1309865601 1309865603
+/random/setSeeds 1309865603 1309865603
 
 /run/initialize
 
@@ -26,5 +28,5 @@
 
 # run simulation
 /gun/particle gamma
-/gun/energy 60 keV
-/run/beamOn 3000000
+/gun/energy 200 keV
+/run/beamOn 10000000

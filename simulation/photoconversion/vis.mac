@@ -10,15 +10,19 @@
 /MM/setKaptonThickness 10 um
 /MM/setCoatingThickness 15 um
 /MM/setCoatingMaterial G4_Au
+/MM/setDetectorThickness 1 cm
+/MM/setDetectorMaterial G4_Xe
 
 # Change simulation parameters
 #/MM/setPairEnergy 19 eV
-/MM/maxStep 0.1 mm
+/MM/maxStep 10 um
 /run/setCut 0.1 mm
 
 # Initialize kernel
 /run/initialize
 
+/gun/particle gamma
+/gun/energy 20 keV
 
 # Use these open statements to open selected visualization
 #
@@ -119,7 +123,7 @@
 #
 # To get nice view
 /vis/geometry/set/visibility World 0 false
-/vis/geometry/set/visibility Envelope 0 false
+#/vis/geometry/set/visibility Envelope 0 false
 /vis/viewer/set/style surface
 /vis/viewer/set/hiddenMarker true
 /vis/viewer/set/viewpointThetaPhi 120 150
