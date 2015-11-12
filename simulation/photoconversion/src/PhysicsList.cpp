@@ -43,7 +43,9 @@ PhysicsList::PhysicsList() : G4VModularPhysicsList(), fEmPhysicsList(0), fDecayP
 	// Decay Physics is always defined
 	fDecayPhysicsList = new G4DecayPhysics();
 
-	// EM physics
+	// G4EmLivermorePhysics
+	// G4EmPenelopePhysics
+	// G4EmStandardPhysics_option4
 	fEmName = G4String("G4EmStandardPhysics_option4");
 	fEmPhysicsList = new G4EmStandardPhysics_option4(1);
 
@@ -126,9 +128,11 @@ void PhysicsList::AddStepMax() {
 		G4ParticleDefinition* particle = theParticleIterator->value();
 		G4ProcessManager* pmanager = particle->GetProcessManager();
 
+		/*
 		if (fStepMaxProcess->IsApplicable(*particle)) {
-			pmanager ->AddDiscreteProcess(fStepMaxProcess);
+			pmanager->AddDiscreteProcess(fStepMaxProcess);
 		}
+		*/
 	}
 }
 
@@ -157,11 +161,9 @@ void PhysicsList::NewPAIModel(const G4ParticleDefinition* part, const G4String& 
 	G4String partname = part->GetParticleName();
 	if(modname == "pai") {
 		G4PAIModel* pai = new G4PAIModel(part,"PAIModel");
-		config->SetExtraEmModel(partname,procname,pai,"GasDetector",
-														0.0,100.*TeV,pai);
+		config->SetExtraEmModel(partname,procname,pai,"GasDetector", 0.0,100.*TeV,pai);
 	} else if(modname == "pai_photon") {
 		G4PAIPhotModel* pai = new G4PAIPhotModel(part,"PAIPhotModel");
-		config->SetExtraEmModel(partname,procname,pai,"GasDetector",
-														0.0,100.*TeV,pai);
+		config->SetExtraEmModel(partname,procname,pai,"GasDetector", 0.0,100.*TeV,pai);
 	}
 }
