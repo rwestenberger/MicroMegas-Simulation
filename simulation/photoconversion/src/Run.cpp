@@ -1,12 +1,15 @@
 #include "Run.hpp"
 
+#include "G4VProcess.hh"
 #include <iomanip>
 
 Run::Run() : G4Run() {} 
 
 Run::~Run() {} 
 
-void Run::CountProcesses(G4String part, G4String procName)  {
+void Run::CountProcesses(const G4String part, const G4VProcess* proc)  {
+	G4String procName = proc->GetProcessName();
+
 	std::map<G4String,std::map<G4String,G4int> >::iterator part_it = fProcCounter.find(part);
 	if (part_it == fProcCounter.end()) fProcCounter[part] = std::map<G4String,G4int>();
 

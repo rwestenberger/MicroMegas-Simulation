@@ -2,6 +2,7 @@
 #define Run_h 1
 
 #include "G4Run.hh"
+#include "G4VProcess.hh"
 #include "globals.hh"
 
 #include <map>
@@ -13,7 +14,7 @@ class Run : public G4Run {
 		Run();
 		virtual ~Run();
 
-		void CountProcesses(G4String, G4String);
+		void CountProcesses(const G4String, const G4VProcess*);
 
 		virtual void Merge(const G4Run*);
 		void EndOfRun();

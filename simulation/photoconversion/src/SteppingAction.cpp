@@ -24,17 +24,14 @@ void SteppingAction::UserSteppingAction(const G4Step* step) {
 
 	G4Track* track = step->GetTrack();
 	const G4ParticleDefinition* particle = track->GetParticleDefinition();
+	Run* run = static_cast<Run*>(G4RunManager::GetRunManager()->GetNonConstCurrentRun());
 
 	// coating conversion
 	if (preVolume == coatingVolume && postVolume == detectorVolume) {
-		if (track->GetParentID() == 1) { // only produced by primary track
+		if (track->GetParentID() != 0) { // only secondaries
 			if (particle->GetParticleType() == "lepton") { // only electrons
 				fOutputManager->FillEvent(fOutputManager->GetCoatingTree(), track);
-
-				const G4VProcess* process = step->GetPostStepPoint()->GetProcessDefinedStep();
-
-				Run* run = static_cast<Run*>(G4RunManager::GetRunManager()->GetNonConstCurrentRun());
-				if (process) run->CountProcesses("coating_trans", process->GetProcessName());
+				run->CountProcesses("coating_trans", track->GetCreatorProcess());
 			}
 		}
 	}
@@ -42,11 +39,8 @@ void SteppingAction::UserSteppingAction(const G4Step* step) {
 	// coating conversion process statistics
 	if (preVolume == coatingVolume) {
 		if (track->GetCurrentStepNumber() == 1) {
-			if (track->GetParentID() == 1 && particle->GetParticleType() == "lepton") {
-				const G4VProcess* process = step->GetPostStepPoint()->GetProcessDefinedStep();
-
-				Run* run = static_cast<Run*>(G4RunManager::GetRunManager()->GetNonConstCurrentRun()); 
-				if (process) run->CountProcesses("coating", process->GetProcessName());
+			if (track->GetParentID() != 0 && particle->GetParticleType() == "lepton") {
+				run->CountProcesses("coating", track->GetCreatorProcess());
 			}
 		}
 	}
@@ -54,14 +48,10 @@ void SteppingAction::UserSteppingAction(const G4Step* step) {
 	// gas conversion
 	if (preVolume == detectorVolume) {
 		if (track->GetCurrentStepNumber() == 1) { // creation
-			if (track->GetParentID() == 1) { // only produced by primary track
+			if (track->GetParentID() == 1) { // only secondaries
 				if (particle->GetParticleType() == "lepton") { // only electrons
 					fOutputManager->FillEvent(fOutputManager->GetDetectorTree(), track);
-
-					const G4VProcess* process = step->GetPostStepPoint()->GetProcessDefinedStep();
-
-					Run* run = static_cast<Run*>(G4RunManager::GetRunManager()->GetNonConstCurrentRun()); 
-					if (process) run->CountProcesses("gas", process->GetProcessName());
+					run->CountProcesses("gas", track->GetCreatorProcess());
 				}
 			}
 		}
