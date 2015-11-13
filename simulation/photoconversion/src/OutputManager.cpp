@@ -60,11 +60,12 @@ void OutputManager::FillEvent(TTree* tree, G4Track* track) {
 	fPhi = dir.getPhi();
 	fThetaVertex = dirVertex.getTheta();
 	fTheta = dir.getTheta();
+
 	fEkinVertex = track->GetVertexKineticEnergy()/keV;
 	fEkin = track->GetKineticEnergy()/keV;
 	fEloss = track->GetVertexKineticEnergy()/keV - track->GetKineticEnergy()/keV;
-	G4ThreeVector vertexPos = track->GetVertexPosition();
-	fZVertex = vertexPos.z()/um;
+
+	fZVertex = track->GetVertexPosition().z()/um;
 	fTrackLength = track->GetTrackLength()/um;
 	if (tree) tree->Fill();
 }

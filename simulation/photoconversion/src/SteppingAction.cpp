@@ -28,7 +28,7 @@ void SteppingAction::UserSteppingAction(const G4Step* step) {
 
 	// coating conversion
 	if (preVolume == coatingVolume && postVolume == detectorVolume) {
-		if (track->GetParentID() != 0) { // only secondaries
+		if (track->GetParentID() == 1) { // only secondaries
 			if (particle->GetParticleType() == "lepton") { // only electrons
 				fOutputManager->FillEvent(fOutputManager->GetCoatingTree(), track);
 				run->CountProcesses("coating_trans", track->GetCreatorProcess());

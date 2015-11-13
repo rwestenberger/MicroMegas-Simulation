@@ -14,15 +14,14 @@
 /MM/setDetectorMaterial G4_Xe
 
 # Change simulation parameters
-#/MM/setPairEnergy 19 eV
-/MM/maxStep 10 um
-/run/setCut 0.1 mm
+/MM/maxStep 1 um
+/run/setCut 5 um
 
 # Initialize kernel
 /run/initialize
 
 /gun/particle gamma
-/gun/energy 20 keV
+/gun/energy 200 keV
 
 # Use these open statements to open selected visualization
 #

@@ -29,4 +29,6 @@
 # run simulation
 /gun/particle gamma
 /gun/energy 200 keV
-/run/beamOn 10000000
+#/gun/direction 1 1 1
+
+/run/beamOn 1000000
