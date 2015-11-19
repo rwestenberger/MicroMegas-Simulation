@@ -33,6 +33,9 @@ void OutputManager::Initialize() {
 	fCoatingTree->Branch("Eloss", &fEloss, "Eloss/D"); // loss of kinetic energy since production
 	fCoatingTree->Branch("ZVertex", &fZVertex, "ZVertex/D"); // z value of the vertex position (track creation point)
 	fCoatingTree->Branch("TrackLength", &fTrackLength, "TrackLengh/D"); // track length
+	fCoatingTree->Branch("Px", &fPx, "Px/D");
+	fCoatingTree->Branch("Py", &fPy, "Py/D");
+	fCoatingTree->Branch("Pz", &fPz, "Pz/D");
 
 	fDetectorTree = new TTree("detectorTree", "Conversion");
 	fDetectorTree->Branch("phi", &fPhi, "phi/D"); // phi angle
@@ -60,6 +63,9 @@ void OutputManager::FillEvent(TTree* tree, G4Track* track) {
 	fPhi = dir.getPhi();
 	fThetaVertex = dirVertex.getTheta();
 	fTheta = dir.getTheta();
+	fPx = dir.x();
+	fPy = dir.y();
+	fPz = dir.z();
 
 	fEkinVertex = track->GetVertexKineticEnergy()/keV;
 	fEkin = track->GetKineticEnergy()/keV;
