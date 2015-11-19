@@ -64,8 +64,8 @@ void RunAction::EndOfRunAction(const G4Run* run) {
 		<< G4endl
 		<< nofEvents << " "<< runCondition << G4endl
 		<< "Electron conversion efficiency: " << G4endl
-		<< "  From coating conversion: " << (G4double)coatingConversionElectrons / nofEvents * 100. << "%" << G4endl
-		<< "  From     gas conversion: " << (G4double)gasConversionElectrons / nofEvents * 100. << "%" << G4endl
+		<< " From coating conversion: " << (G4double)coatingConversionElectrons / nofEvents * 100. << "%" << G4endl
+		<< " From     gas conversion: " << (G4double)gasConversionElectrons / nofEvents * 100. << "%" << G4endl
 		<< "------------------------------------------------------------"
 		<< G4endl;
 

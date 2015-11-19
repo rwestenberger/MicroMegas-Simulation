@@ -31,7 +31,7 @@ G4VPhysicalVolume* DetectorConstruction::Construct() {
 	G4bool checkOverlaps = true;
 
 	// World
-	G4double sizeXY_world = 5*cm;
+	G4double sizeXY_world = 10*cm;
 	G4double sizeZ_world  = 2.*(fKaptonThickness + fCoatingThickness + fDetectorThickness);
 	G4Material* mat_air = nist->FindOrBuildMaterial("G4_AIR");
 
