@@ -38,6 +38,7 @@ class OutputManager {
 		G4double fEloss;
 		G4double fZVertex;
 		G4double fTrackLength;
+		G4double fPx, fPy, fPz;
 };
 
 #endif
