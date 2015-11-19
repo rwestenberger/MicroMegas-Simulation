@@ -17,6 +17,7 @@ class PhysicsList: public G4VModularPhysicsList {
 		virtual void ConstructProcess();
 		virtual void SetCuts();
 
+		void AddDecay();
 		void AddStepMax(); 
 
 	private:
