@@ -19,7 +19,7 @@ class OutputManager {
 		void Initialize();
 		void Save();
 		void PrintStatistic();
-		TTree* GetCoatingTree() { return fCoatingTree; }
+		TTree* GetCoatingTree()  { return fCoatingTree; }
 		TTree* GetDetectorTree() { return fDetectorTree; }
 
 		void FillEvent(TTree*, G4Track*);
@@ -29,16 +29,16 @@ class OutputManager {
 
 		TTree*   fCoatingTree;
 		TTree*   fDetectorTree;
-		G4double fPhiVertex;
-		G4double fPhi;
-		G4double fTheta;
-		G4double fThetaVertex;
-		G4double fEkin;
-		G4double fEkinVertex;
+
+		G4double fPhiVertex, fPhi;
+		G4double fThetaVertex, fTheta;
+		G4double fT;
+		G4double fEkinVertex, fEkin;
 		G4double fEloss;
 		G4double fZVertex;
 		G4double fTrackLength;
 		G4double fPx, fPy, fPz;
+		G4double fPosX, fPosY, fPosZ;
 };
 
 #endif

@@ -40,7 +40,7 @@ G4VPhysicalVolume* DetectorConstruction::Construct() {
 	fPhysWorld = new G4PVPlacement(0, G4ThreeVector(), fLogicWorld, "World", 0, false, 0, checkOverlaps);
 
 	// Kathode
-	G4double sizeXY_kathode = sizeXY_world*0.9;
+	G4double sizeXY_kathode = sizeXY_world*0.99;
 	G4Material* mat_kapton = nist->FindOrBuildMaterial("G4_KAPTON");
 
 	G4ThreeVector pos_kathode = G4ThreeVector(0, 0, fKaptonThickness/2.);

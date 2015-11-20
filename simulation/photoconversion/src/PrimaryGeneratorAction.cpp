@@ -31,7 +31,7 @@ void PrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent) {
 	//G4double x0 = (G4UniformRand()-.5)*10*cm;
 	//G4double y0 = (G4UniformRand()-.5)*10*cm;
 	G4double x0 = 0, y0 = 0;
-	G4double z0 = -500*um;
+	G4double z0 = -1*um;
 	fParticleGun->SetParticlePosition(G4ThreeVector(x0,y0,z0));
 	
 	/*
