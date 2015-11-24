@@ -57,7 +57,6 @@ G4VPhysicalVolume* DetectorConstruction::Construct() {
 	if (fCoatingMaterial) mat_coating = fCoatingMaterial;
 	else mat_coating = nist->FindOrBuildMaterial("G4_Au");
 
-
 	G4ThreeVector pos_coating = pos_kathode + G4ThreeVector(0, 0, (fKaptonThickness + fCoatingThickness)/2.);
 	G4Box* solid_coating = new G4Box("Coating", .5*sizeXY_coating, .5*sizeXY_coating, .5*fCoatingThickness);
 	fLogicCoating = new G4LogicalVolume(solid_coating, mat_coating, "Coating");
@@ -68,7 +67,6 @@ G4VPhysicalVolume* DetectorConstruction::Construct() {
 
 	// Detector
 	G4double sizeXY_detector = sizeXY_world;
-	//G4double sizeZ_detector = .5*sizeZ_world - fKaptonThickness - fCoatingThickness;
 	G4Material* mat_detector;
 	if (fDetectorMaterial) mat_detector = fDetectorMaterial;
 	else mat_detector = nist->FindOrBuildMaterial("G4_Ar");
