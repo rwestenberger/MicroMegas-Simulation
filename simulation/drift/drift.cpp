@@ -26,16 +26,16 @@ using namespace Garfield;
 TFile *histFile, *treeFile;
 
 int main(int argc, char* argv[]) {
-	int numberOfEvents = 1; // number of avalanches to simulate
+	int numberOfEvents = 1; // number of avalanches to simulate, only used if no input file is given
 	const int maxAvalancheSize = 0; // constrains the maximum avalanche size, 0 means no limit
 	const bool visualization = false; // plotting
-	const double driftField = 500.; // V/cm
-	double initialEnergy = 200e3; // x-ray photon: 5-250 keV
+	const double driftField = -500.; // V/cm, should be negative
+	double initialEnergy = 200e3; // x-ray photon: 5-250 keV, only used if no input file is given
 
 	//const double lattice_const = 0.00625;
-	double areaZmin = 0.0, areaZmax = 0.994; // begin and end of the drift region, 60µm above the mesh where the field gets inhomogeneous (in the region of about -2.3V to about +150V)
 	double areaXmin = -5., areaXmax = -areaXmin; // 10x10cm detector
 	double areaYmin = -5., areaYmax = -areaYmin;
+	double areaZmin = 0.0, areaZmax = 0.994; // begin and end of the drift region, 60µm above the mesh where the field gets inhomogeneous (in the region of about -2.3V to about +150V)
 
 	bool useInputFile = false;
 	TFile* inputFile;
@@ -53,6 +53,7 @@ int main(int argc, char* argv[]) {
 		}
 		inputTree = (TTree*)inputFile->Get("coatingTree");
 		numberOfEvents = inputTree->GetEntriesFast();
+		numberOfEvents = 10; // testing
 		inputTree->SetBranchAddress("PosX", &inPosX); inputTree->SetBranchAddress("PosY", &inPosY);	inputTree->SetBranchAddress("PosZ", &inPosZ);
 		inputTree->SetBranchAddress("Px", &inPx); inputTree->SetBranchAddress("Py", &inPy); inputTree->SetBranchAddress("Pz", &inPz);
 		inputTree->SetBranchAddress("Ekin", &inEkin);
@@ -85,6 +86,7 @@ int main(int argc, char* argv[]) {
 	// Define the medium
 	MediumMagboltz* gas = new MediumMagboltz();
 	gas->SetComposition("ar", 93., "co2", 7.);	// Specify the gas mixture (Ar/CO2 93:7)
+	//gas->SetComposition("Xe");
 	gas->SetTemperature(293.15);				// Set the temperature (K)
 	gas->SetPressure(750.);						// Set the pressure (Torr)
 	gas->EnableDrift();							// Allow for drifting in this medium
@@ -132,6 +134,7 @@ int main(int argc, char* argv[]) {
 			initialDirection = initialMomentum;
 			initialTime = inT;
 			initialEnergy = inEkin; // override default energy
+			//if (inEkin > 100e3 || inEkin < 50e3 || inPz < 0.98) continue; // testing
 		} else {
 			initialPosition = TVector3(0., 0., areaZmin);
 			initialDirection = TVector3(-1., -1., -.2);
