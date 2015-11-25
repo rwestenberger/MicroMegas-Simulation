@@ -30,24 +30,24 @@ public :
 
 	const Double_t lattice_const = 0.00625;
 	const Double_t readoutZ = -0.0152;
-	Double_t viewXmin = -lattice_const*3., viewXmax = -viewXmin;
-	Double_t viewYmin = -lattice_const*3., viewYmax = -viewYmin;
+	Double_t viewXmin = -lattice_const*300., viewXmax = -viewXmin;
+	Double_t viewYmin = -lattice_const*300., viewYmax = -viewYmin;
 	Double_t viewZmin = readoutZ, viewZmax = 0.0328;
 
 	Avalanche(TTree *tree=0);
 	virtual ~Avalanche();
-	virtual Int_t    Cut(Long64_t entry);
+	virtual bool    Cut();
 	virtual Int_t    GetEntry(Long64_t entry);
 	virtual Long64_t LoadTree(Long64_t entry);
 	virtual void     Init(TTree *tree);
 	virtual void     Loop();
 	virtual void     Show(Long64_t entry = -1);
-	void DrawEvent();
+	Double_t DrawEvent();
 };
 
 Avalanche::Avalanche(TTree *tree) : fChain(0)  {
 	if (tree == 0) {
-		TFile *f = new TFile("../LUT/avalancheLUT.root");
+		TFile *f = new TFile("../simulation/avalanche/avalanche.root");
 		f->GetObject("avalancheTree",tree);
 	}
 	Init(tree);
@@ -92,7 +92,7 @@ void Avalanche::Init(TTree *tree) {
 	fChain->SetBranchAddress("e1", &e1, &b_e1);
 	fChain->SetBranchAddress("t1", &t1, &b_t1);
 
-	cEvent = new TCanvas("cEvent", "Event display", 800, 600);
+	cEvent = new TCanvas("cEvent", "Event display", 1000, 800);
 	vEvent = TView::CreateView(1);
 	vEvent->SetRange(viewXmin, viewYmin, viewZmin, viewXmax, viewYmax, viewZmax);
 	vEvent->ShowAxis();
