@@ -69,7 +69,9 @@ End
 ! Upper end
 Boundary Condition 1
   Target Boundaries(1) = 14
-  Potential = -18 ! -18 for 600V/cm, -24 for 800V/cm in the 300um conversion zone
+  ![[[cog from MMconfig import *; cog.outl("Potential = {}".format(-float(conf["drift"]["field"]) * float(conf["amplification"]["conversion_zone_height"]))) ]]]
+  Potential = -18.0
+  ![[[end]]]
   Name = "Upper"
 End
 
@@ -83,8 +85,10 @@ End
 ! Readout
 Boundary Condition 3
   Target Boundaries(1) = 5 
+  ![[[cog from MMconfig import *; cog.outl("Potential = {}".format(float(conf["amplification"]["field"]) * float(conf["amplification"]["gap"]))) ]]]
+  Potential = 512.0
+  ![[[end]]]
   Name = "Readout"
-  Potential = 512 !384 ! 512 for 40kV/cm, 530 for 41.4kV/cm in 128um amp region
 End
 
 

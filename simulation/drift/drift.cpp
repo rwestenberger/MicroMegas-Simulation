@@ -26,26 +26,41 @@ using namespace Garfield;
 TFile *histFile, *treeFile;
 
 int main(int argc, char* argv[]) {
-	int numberOfEvents = 1; // number of avalanches to simulate, only used if no input file is given
+	/* [[[cog
+	from MMconfig import *
+	cog.outl(
+		"""
+		const int maxAvalancheSize = {}; // constrains the maximum avalanche size, 0 means no limit
+		const double driftField = {}; // V/cm, should be negative
+		double areaXmin = {}, areaXmax = -areaXmin;
+		double areaYmin = {}, areaYmax = -areaYmin;
+		double areaZmin = {}, areaZmax = {}; // begin and end of the drift region, 100µm above the mesh where the field gets inhomogeneous (value from: http://iopscience.iop.org/article/10.1088/1748-0221/6/06/P06011/pdf)
+		""".format(
+			conf["drift"]["max_avalanche_size"],
+			-float(conf["drift"]["field"]),
+			-float(conf["detector"]["size_x"])/2.,
+			-float(conf["detector"]["size_y"])/2.,
+			conf["drift"]["z_min"], conf["drift"]["z_max"]
+		)
+	)
+	]]] */
+
 	const int maxAvalancheSize = 0; // constrains the maximum avalanche size, 0 means no limit
-	const bool visualization = false; // plotting
-	const double driftField = -600.; // V/cm, should be negative
-	double initialEnergy = 200e3; // x-ray photon: 5-250 keV, only used if no input file is given
+	const double driftField = -600.0; // V/cm, should be negative
+	double areaXmin = -5.0, areaXmax = -areaXmin;
+	double areaYmin = -5.0, areaYmax = -areaYmin;
+	double areaZmin = 0., areaZmax = 0.990; // begin and end of the drift region, 100µm above the mesh where the field gets inhomogeneous (value from: http://iopscience.iop.org/article/10.1088/1748-0221/6/06/P06011/pdf)
 
-	//const double lattice_const = 0.00625;
-	double areaXmin = -5., areaXmax = -areaXmin; // 10x10cm detector
-	double areaYmin = -5., areaYmax = -areaYmin;
-	double areaZmin = 0.0, areaZmax = 0.990; // begin and end of the drift region, 100µm above the mesh where the field gets inhomogeneous (value from: http://iopscience.iop.org/article/10.1088/1748-0221/6/06/P06011/pdf)
+	// [[[end]]]
 
-	bool useInputFile = false;
 	TFile* inputFile;
 	TTree* inputTree;
+	Int_t numberOfEvents;
 	Double_t inPosX, inPosY, inPosZ;
 	Double_t inPx, inPy, inPz;
 	Double_t inEkin, inT;
 
 	if (argc == 2) {
-		useInputFile = true;
 		inputFile = TFile::Open(argv[1]);
 		if (!inputFile->IsOpen()) {
 			cout << "Error opening file: " << argv[1] << endl;
@@ -53,19 +68,15 @@ int main(int argc, char* argv[]) {
 		}
 		inputTree = (TTree*)inputFile->Get("coatingTree");
 		numberOfEvents = inputTree->GetEntriesFast();
-		numberOfEvents = 10; // testing
 		inputTree->SetBranchAddress("PosX", &inPosX); inputTree->SetBranchAddress("PosY", &inPosY);	inputTree->SetBranchAddress("PosZ", &inPosZ);
 		inputTree->SetBranchAddress("Px", &inPx); inputTree->SetBranchAddress("Py", &inPy); inputTree->SetBranchAddress("Pz", &inPz);
 		inputTree->SetBranchAddress("Ekin", &inEkin);
 		inputTree->SetBranchAddress("t", &inT);
 		cout << "Reading " << numberOfEvents << " events from " << inputFile->GetPath() << endl;
-	} else if (argc > 2) {
-		cout	<< "Usage: " << argv[0] << " [inputFile.root]" << endl
-				<< "       If no input file is given default initial conditions will be used." << endl;
+	} else {
+		cout << "Usage: " << argv[0] << " inputFile.root" << endl;
 		return 1;
 	}
-
-	//TApplication app("app", &argc, argv);
 
 	// Tree file
 	Int_t nele;  // number of electrons in avalanche
@@ -85,8 +96,9 @@ int main(int argc, char* argv[]) {
 
 	// Define the medium
 	MediumMagboltz* gas = new MediumMagboltz();
-	gas->SetComposition("ar", 93., "co2", 7.);	// Specify the gas mixture (Ar/CO2 93:7)
-	//gas->SetComposition("Xe");
+	/* [[[cog from MMconfig import *; cog.outl("gas->SetComposition({});".format(conf["detector"]["gas_composition"])) ]]] */
+	gas->SetComposition("ar", 93., "co2", 7.);
+	// [[[end]]]
 	gas->SetTemperature(293.15);				// Set the temperature (K)
 	gas->SetPressure(750.);						// Set the pressure (Torr)
 	gas->EnableDrift();							// Allow for drifting in this medium
@@ -111,35 +123,25 @@ int main(int argc, char* argv[]) {
 	if (maxAvalancheSize > 0) avalanchemicroscopic->EnableAvalancheSizeLimit(maxAvalancheSize);
 	avalanchemicroscopic->EnableSignalCalculation();
 
-	ViewDrift* viewdrift;
-
-	if (visualization) {
-		viewdrift = new ViewDrift();
-		viewdrift->SetArea(areaXmin, areaYmin, areaZmin, areaXmax, areaYmax, areaZmax);
-		avalanchemicroscopic->EnablePlotting(viewdrift);
-	}
+	/*
+	TApplication app("app", &argc, argv);
+	ViewDrift* viewdrift = new ViewDrift();
+	viewdrift->SetArea(areaXmin, areaYmin, areaZmin, areaXmax, areaYmax, areaZmax);
+	avalanchemicroscopic->EnablePlotting(viewdrift);
+	*/
 
 	// actual simulation
 	for (int i=0; i<numberOfEvents; i++) {
 		// Set the initial position [cm], direction, starting time [ns] and initial energy [eV]
-		TVector3 initialPosition, initialDirection;
-		Double_t initialTime;
-		if (useInputFile) {
-			inputTree->GetEvent(i, 0); // 0 get only active branches, 1 get all branches
-			inputTree->Show(i);
+		inputTree->GetEvent(i, 0); // 0 get only active branches, 1 get all branches
+		inputTree->Show(i);
 
-			initialPosition = TVector3(inPosX, inPosY, inPosZ);
-			TVector3 initialMomentum = TVector3(inPx, inPy, inPz);
-			initialMomentum.SetMag(1.); // normalize to get direction (should be already normalized)
-			initialDirection = initialMomentum;
-			initialTime = inT;
-			initialEnergy = inEkin; // override default energy
-			//if (inEkin > 100e3 || inEkin < 50e3 || inPz < 0.98) continue; // testing
-		} else {
-			initialPosition = TVector3(0., 0., areaZmin);
-			initialDirection = TVector3(-1., -1., -.2);
-			initialTime = 0.0;
-		}
+		TVector3 initialPosition = TVector3(inPosX, inPosY, inPosZ);
+		TVector3 initialMomentum = TVector3(inPx, inPy, inPz);
+		initialMomentum.SetMag(1.); // normalize to get direction (should be already normalized)
+		TVector3 initialDirection = initialMomentum;
+		Double_t initialTime = inT;
+		Double_t initialEnergy = inEkin; // override default energy
 
 		cout << "\r" << setw(4) << i/(double)numberOfEvents*100. << "% done   "; flush(cout);
 		avalanchemicroscopic->AvalancheElectron(initialPosition.x(), initialPosition.y(), initialPosition.z(), initialTime, initialEnergy, initialDirection.x(), initialDirection.y(), initialDirection.z());
@@ -174,14 +176,15 @@ int main(int argc, char* argv[]) {
 	}
 	cout << endl;
 
-	//if (visualization) viewdrift->Plot();
-
 	treeFile->cd();
 	treeFile->Write();
 	treeFile->Close();
-	if (useInputFile) inputFile->Close();
+	inputFile->Close();
 
-	//if (visualization) app.Run(kFALSE);
+	/*
+	viewdrift->Plot();
+	app.Run(kFALSE);
+	*/
 	cout << "Done." << endl;
 	return 0;
 }
