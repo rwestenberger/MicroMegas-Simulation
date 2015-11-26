@@ -9,11 +9,11 @@
 /MM/setCoatingThickness 15 um
 /MM/setCoatingMaterial G4_Au
 /MM/setDetectorThickness 1 cm
-/MM/setDetectorMaterial G4_Xe
+/MM/setDetectorMaterial G4_Ar
 
 # Change simulation parameters
-/MM/maxStep 1 um
-/run/setCut 5 um
+/MM/maxStep 1 cm
+/run/setCut 2 um
 
 # Random seeds
 /random/setSeeds 1309865603 1309865603
@@ -29,6 +29,6 @@
 # run simulation
 /gun/particle gamma
 /gun/energy 200 keV
-#/gun/direction 1 1 1
+/gun/direction 0 0 1 # theta = arctan(x/z), x = z*tan(theta)
 
-/run/beamOn 1000000
+/run/beamOn 100000

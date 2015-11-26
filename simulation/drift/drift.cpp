@@ -29,13 +29,13 @@ int main(int argc, char* argv[]) {
 	int numberOfEvents = 1; // number of avalanches to simulate, only used if no input file is given
 	const int maxAvalancheSize = 0; // constrains the maximum avalanche size, 0 means no limit
 	const bool visualization = false; // plotting
-	const double driftField = -500.; // V/cm, should be negative
+	const double driftField = -600.; // V/cm, should be negative
 	double initialEnergy = 200e3; // x-ray photon: 5-250 keV, only used if no input file is given
 
 	//const double lattice_const = 0.00625;
 	double areaXmin = -5., areaXmax = -areaXmin; // 10x10cm detector
 	double areaYmin = -5., areaYmax = -areaYmin;
-	double areaZmin = 0.0, areaZmax = 0.994; // begin and end of the drift region, 60µm above the mesh where the field gets inhomogeneous (in the region of about -2.3V to about +150V)
+	double areaZmin = 0.0, areaZmax = 0.990; // begin and end of the drift region, 100µm above the mesh where the field gets inhomogeneous (value from: http://iopscience.iop.org/article/10.1088/1748-0221/6/06/P06011/pdf)
 
 	bool useInputFile = false;
 	TFile* inputFile;

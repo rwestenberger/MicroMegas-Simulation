@@ -64,10 +64,12 @@ End
 
 
 !! Voltages applied
+! see: http://iopscience.iop.org/article/10.1088/1748-0221/6/06/P06011/pdf for calculations + simulations + measurements
+!      of the mesh transparency in dependence of the applied fields
 ! Upper end
 Boundary Condition 1
   Target Boundaries(1) = 14
-  Potential = -18 ! -18 for about 600V/cm
+  Potential = -18 ! -18 for 600V/cm, -24 for 800V/cm in the 300um conversion zone
   Name = "Upper"
 End
 
@@ -82,7 +84,7 @@ End
 Boundary Condition 3
   Target Boundaries(1) = 5 
   Name = "Readout"
-  Potential = 512 ! 512 for about 40kV/cm in 128mum amp region
+  Potential = 512 !384 ! 512 for 40kV/cm, 530 for 41.4kV/cm in 128um amp region
 End
 
 

@@ -30,19 +30,14 @@ TFile *histFile, *treeFile;
 int main(int argc, char * argv[]) {
 	int numberOfEvents = 100; // number of avalanches to simulate, 500 events took 646min
 	const int maxAvalancheSize = 0; // constrains the maximum avalanche size, 0 means no limit
-	const double startZ = 0.006; // starting electron z value, height above the mesh; 60µm is where the field gets inhomogeneous (at about -2.3V to about +150V)
+	const double startZ = 0.01; // starting electron z value, height above the mesh; 100µm is where the field gets inhomogeneous (value from: http://iopscience.iop.org/article/10.1088/1748-0221/6/06/P06011/pdf)
 	double initialEnergy = 0.5; // starting energy, from drift simulation this is about 0-2eV (max at 0.5eV)
 
-	// units cm
-	/*const double lattice_const = 0.00625;
-	double areaXmin = -lattice_const*3., areaXmax = -areaXmin;
-	double areaYmin = -lattice_const*3., areaYmax = -areaYmin;
-	double areaZmin = readoutZ, areaZmax = 0.0328;
-	*/
 	const double readoutZ = -0.015;
 	double areaXmin = -5., areaXmax = -areaXmin;
 	double areaYmin = -5., areaYmax = -areaYmin;
-	double areaZmin = readoutZ, areaZmax = 0.006;
+	//double areaZmin = readoutZ, areaZmax = startZ + 0.02; // some safety distance on the top
+	double areaZmin = -0.002, areaZmax = startZ + 0.02; // some safety distance on the top
 
 	bool useInputFile = false;
 	TFile* inputFile;
@@ -59,7 +54,6 @@ int main(int argc, char * argv[]) {
 		}
 		inputTree = (TTree*)inputFile->Get("driftTree");
 		numberOfEvents = inputTree->GetEntriesFast();
-		numberOfEvents = 4; // testing
 		inputTree->SetBranchAddress("x1", &inPosX); inputTree->SetBranchAddress("y1", &inPosY);	inputTree->SetBranchAddress("z1", &inPosZ);
 		inputTree->SetBranchAddress("e1", &inEkin);
 		inputTree->SetBranchAddress("t1", &inT);
@@ -128,10 +122,18 @@ int main(int argc, char * argv[]) {
     avalanchemicroscopic->SetSensor(sensor);
     avalanchemicroscopic->SetCollisionSteps(1);
     if (maxAvalancheSize > 0) avalanchemicroscopic->EnableAvalancheSizeLimit(maxAvalancheSize);
-    avalanchemicroscopic->EnableSignalCalculation();
+    //avalanchemicroscopic->EnableSignalCalculation();
+
+ 	/*
+ 	// drift visualization
+ 	TApplication app("app", &argc, argv);
+	ViewDrift* viewdrift = new ViewDrift();
+	viewdrift->SetArea(areaXmin, areaYmin, areaZmin-0.001, areaXmax, areaYmax, areaZmax+0.001);
+	avalanchemicroscopic->EnablePlotting(viewdrift);
+	*/
 
 	// actual simulation
-	for (int i=3; i<numberOfEvents; i++) {
+	for (int i=0; i<numberOfEvents; i++) {
 		int numberOfElectrons;
 		if (useInputFile) {
 			inputTree->GetEvent(i, 0); // 0 get only active branches, 1 get all branches
@@ -147,7 +149,7 @@ int main(int argc, char * argv[]) {
 			Double_t initialTime;
 			if (useInputFile) {
 				initialPosition = TVector3(inPosX->at(e), inPosY->at(e), startZ); // using startZ instead of inPosZ because of the coordinate offset between drift and avalanche simulation
-				initialDirection = TVector3(0., 0., -1.);
+				initialDirection = TVector3(0., 0., -1.); // 0,0,0 --> for random initial direction
 				initialTime = inT->at(e);
 				initialEnergy = inEkin->at(e); // override default energy
 			} else {
@@ -156,7 +158,6 @@ int main(int argc, char * argv[]) {
 				initialTime = 0.;
 			}
 
-			cout << e << " / " << numberOfElectrons << endl;
 			cout << "Initial Time    : " << initialTime << " ns" << endl;
 			cout << "Initial Energy  : " << initialEnergy << " eV" << endl;
 			cout << "Initial position: " << initialPosition.x() << ", " << initialPosition.y()  << ", " << initialPosition.z() << " cm" << endl;
@@ -184,19 +185,23 @@ int main(int argc, char * argv[]) {
 				status.push_back(stat);
 			}
 
-			cout << setw(4) << e/(double)numberOfElectrons*100. << "% of this avalanche done." << endl;
+			cout << setw(5) << i/(double)numberOfEvents*100. << "% of all events done." << endl;
+			cout << setw(4) << e/(double)numberOfElectrons*100. << "% of this event done." << endl;
 		}
 
 		outputTree->Fill();
 		x0.clear(); y0.clear(); z0.clear(); e0.clear(); t0.clear();
 		x1.clear(); y1.clear(); z1.clear(); e1.clear(); t1.clear();
-		
-		cout << setw(4) << i/(double)numberOfEvents*100. << "% done" << endl;
 	}
 
 	treeFile->cd();
 	treeFile->Write();
 	treeFile->Close();
+
+	/*
+	viewdrift->Plot();
+	app.Run(kFALSE);
+	*/
 
 	cout << "Done." << endl;
 	return 0;
