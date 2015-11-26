@@ -1,5 +1,7 @@
 # Simulation
-Dependencies: FreeCAD, Elmer, gmsh, Garfield++, Geant4, ROOT
+Dependencies: FreeCAD, Elmer, gmsh, Garfield++, Geant4, ROOT, python2/3 + cogapp
+
+For the configuration of the simulated setup see [simulation.conf](simulation.conf). This config file is used to cog the cpp source files and solver files to adapt the simulation accordingly.
 
 ## Photoconversion simulation procedure
 Assuming you are in the photoconversion simulation directory:
@@ -39,19 +41,10 @@ Assuming you are in the avalanche simulation directory:
 
 1. Export FreeCAD model (geometry/geometry.fcstd) to .step file.
 
-2. Mesh .step file to .msh file with gmsh:
-
-	`gmsh geometry.step -3 -order 2 -clmax 0.02`
-3. Call ElmerGrid on the .msh file:
-
-	`ElmerGrid 14 2 geometry.msh -autoclean`
-4. Call ElmerSolver to generate electric field and weighting field:
-
-	`ElmerSolver calculate_field.sif && ElmerSolver calculate_field_weight.sif`
-5. Build Garfield++ executable: 
+2. Mesh .step file to .msh file with gmsh, call ElmerSolver to generate electric field and build Garfield++ executable: 
 
 	`make`
-6. Run simulation:
+3. Run simulation:
 
 	`./avalanche`
 
