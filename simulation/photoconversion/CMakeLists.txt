@@ -51,6 +51,3 @@ add_dependencies(photoconversion CogFiles)
 
 # For internal Geant4 use - but has no effect if you build this standalone
 add_custom_target(MM DEPENDS photoconversion)
-
-# Install the executable to 'bin' directory under CMAKE_INSTALL_PREFIX
-install(TARGETS photoconversion DESTINATION bin)
