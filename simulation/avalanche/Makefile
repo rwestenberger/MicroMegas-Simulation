@@ -15,7 +15,7 @@ LDFLAGS = `root-config --glibs` -lGeom -lgfortran -lm \
 
 all: avalanche geometry/geometry/field.result geometry/geometry/mesh.elements geometry/geometry.msh
 
-avalanche: avalanche.cpp
+avalanche: avalanche.cpp ../simulation.conf
 	cog.py -r avalanche.cpp
 	$(CXX) $(CFLAGS) avalanche.cpp
 	$(CXX) -o avalanche avalanche.o $(LDFLAGS)

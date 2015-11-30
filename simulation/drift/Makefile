@@ -14,7 +14,7 @@ LDFLAGS = `root-config --glibs` -lGeom -lgfortran -lm \
 	-L$(LIBDIR) -lGarfield \
 	-g
 
-drift: drift.cpp
+drift: drift.cpp ../simulation.conf
 	cog.py -r drift.cpp
 	$(CXX) $(CFLAGS) drift.cpp
 	$(CXX) -o drift drift.o $(LDFLAGS)
