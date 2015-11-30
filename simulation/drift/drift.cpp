@@ -23,8 +23,6 @@
 using namespace std;
 using namespace Garfield;
 
-TFile *histFile, *treeFile;
-
 int main(int argc, char* argv[]) {
 	/* [[[cog
 	from MMconfig import *
@@ -51,32 +49,40 @@ int main(int argc, char* argv[]) {
 	double areaYmin = -5.0, areaYmax = -areaYmin;
 	double areaZmin = 0., areaZmax = 0.990; // begin and end of the drift region, 100µm above the mesh where the field gets inhomogeneous (value from: http://iopscience.iop.org/article/10.1088/1748-0221/6/06/P06011/pdf)
 
-	// [[[end]]]
+	//[[[end]]]
 
-	TFile* inputFile;
-	TTree* inputTree;
+	TString fileName;
+	// TODO: Add config support for output and input file path
+	if (argc == 2) {
+		fileName = argv[1];
+	} else {
+		// use file from conf
+		//[[[cog from MMconfig import *; cog.outl("fileName = {};".format(conf["drift"]["in_filename"])) ]]]
+		//[[[end]]]
+	}
+
+	if (!fileName) {
+		cerr << "No input file specified or given!" << endl;
+		return 1;
+	}
+
+	TFile* inputFile = TFile::Open(fileName);
+	if (!inputFile->IsOpen()) {
+		cout << "Error opening file: " << argv[1] << endl;
+		return 1;
+	}
+	TTree* inputTree = (TTree*)inputFile->Get("coatingTree");
+	numberOfEvents = inputTree->GetEntriesFast();
+
 	Int_t numberOfEvents;
 	Double_t inPosX, inPosY, inPosZ;
 	Double_t inPx, inPy, inPz;
 	Double_t inEkin, inT;
-
-	if (argc == 2) {
-		inputFile = TFile::Open(argv[1]);
-		if (!inputFile->IsOpen()) {
-			cout << "Error opening file: " << argv[1] << endl;
-			return 1;
-		}
-		inputTree = (TTree*)inputFile->Get("coatingTree");
-		numberOfEvents = inputTree->GetEntriesFast();
-		inputTree->SetBranchAddress("PosX", &inPosX); inputTree->SetBranchAddress("PosY", &inPosY);	inputTree->SetBranchAddress("PosZ", &inPosZ);
-		inputTree->SetBranchAddress("Px", &inPx); inputTree->SetBranchAddress("Py", &inPy); inputTree->SetBranchAddress("Pz", &inPz);
-		inputTree->SetBranchAddress("Ekin", &inEkin);
-		inputTree->SetBranchAddress("t", &inT);
-		cout << "Reading " << numberOfEvents << " events from " << inputFile->GetPath() << endl;
-	} else {
-		cout << "Usage: " << argv[0] << " inputFile.root" << endl;
-		return 1;
-	}
+	inputTree->SetBranchAddress("PosX", &inPosX); inputTree->SetBranchAddress("PosY", &inPosY);	inputTree->SetBranchAddress("PosZ", &inPosZ);
+	inputTree->SetBranchAddress("Px", &inPx); inputTree->SetBranchAddress("Py", &inPy); inputTree->SetBranchAddress("Pz", &inPz);
+	inputTree->SetBranchAddress("Ekin", &inEkin);
+	inputTree->SetBranchAddress("t", &inT);
+	cout << "Reading " << numberOfEvents << " events from " << inputFile->GetPath() << endl;
 
 	// Tree file
 	Int_t nele;  // number of electrons in avalanche
@@ -85,8 +91,9 @@ int main(int argc, char* argv[]) {
 	vector<Double_t> x0, y0, z0, e0, t0;
 	vector<Double_t> x1, y1, z1, e1, t1;
 
-	treeFile = new TFile("drift.root", "RECREATE");
-	treeFile->cd();
+	//[[[cog from MMconfig import *; cog.outl("TFile* outputFile = new TFile(\"{}\", \"RECREATE\");".format(conf["drift"]["out_filename"]))
+	//[[[end]]]
+	outputFile->cd();
 	TTree* outputTree = new TTree("driftTree", "Drifts");
 	outputTree->Branch("nele", &nele, "nele/I");
 	outputTree->Branch("nelep", &nelep, "nelep/I");
@@ -176,9 +183,9 @@ int main(int argc, char* argv[]) {
 	}
 	cout << endl;
 
-	treeFile->cd();
-	treeFile->Write();
-	treeFile->Close();
+	outputFile->cd();
+	outputFile->Write();
+	outputFile->Close();
 	inputFile->Close();
 
 	/*

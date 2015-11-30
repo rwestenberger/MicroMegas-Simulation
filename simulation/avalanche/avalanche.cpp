@@ -25,8 +25,6 @@
 using namespace std;
 using namespace Garfield;
 
-TFile *histFile, *treeFile;
-
 int main(int argc, char * argv[]) {
 	/* [[[cog
 	from MMconfig import *
@@ -52,29 +50,37 @@ int main(int argc, char * argv[]) {
 
 	// [[[end]]]
 
-	TFile* inputFile;
-	TTree* inputTree;
+	TString fileName;
+	// TODO: Add config support for output and input file path
+	if (argc == 2) {
+		fileName = argv[1];
+	} else {
+		// use file from conf
+		//[[[cog from MMconfig import *; cog.outl("fileName = {};".format(conf["ávalanche"]["in_filename"])) ]]]
+		//[[[end]]]
+	}
+
+	if (!fileName) {
+		cerr << "No input file specified or given!" << endl;
+		return 1;
+	}
+
+	TFile* inputFile = TFile::Open(fileName);
+	if (!inputFile->IsOpen()) {
+		cout << "Error opening file: " << argv[1] << endl;
+		return 1;
+	}
+	TTree* inputTree = (TTree*)inputFile->Get("driftTree");
+	numberOfEvents = inputTree->GetEntriesFast();
+
 	Int_t numberOfEvents;
 	Int_t inNele;
 	vector<Double_t> *inPosX = 0, *inPosY = 0, *inPosZ = 0, *inEkin = 0, *inT = 0;
-
-	if (argc == 2) {
-		inputFile = TFile::Open(argv[1]);
-		if (!inputFile->IsOpen()) {
-			cout << "Error opening file: " << argv[1] << endl;
-			return 1;
-		}
-		inputTree = (TTree*)inputFile->Get("driftTree");
-		numberOfEvents = inputTree->GetEntriesFast();
-		inputTree->SetBranchAddress("x1", &inPosX); inputTree->SetBranchAddress("y1", &inPosY);	inputTree->SetBranchAddress("z1", &inPosZ);
-		inputTree->SetBranchAddress("e1", &inEkin);
-		inputTree->SetBranchAddress("t1", &inT);
-		inputTree->SetBranchAddress("nele", &inNele);
-		cout << "Reading " << numberOfEvents << " events from " << inputFile->GetPath() << endl;
-	} else {
-		cout << "Usage: " << argv[0] << " inputFile.root" << endl;
-		return 1;
-	}
+	inputTree->SetBranchAddress("x1", &inPosX); inputTree->SetBranchAddress("y1", &inPosY);	inputTree->SetBranchAddress("z1", &inPosZ);
+	inputTree->SetBranchAddress("e1", &inEkin);
+	inputTree->SetBranchAddress("t1", &inT);
+	inputTree->SetBranchAddress("nele", &inNele);
+	cout << "Reading " << numberOfEvents << " events from " << inputFile->GetPath() << endl;
 
 	Int_t nele;  // number of electrons in avalanche
 	Int_t nelep; // number of electron end points
@@ -82,9 +88,9 @@ int main(int argc, char * argv[]) {
 	vector<Double_t> x0, y0, z0, e0, t0;
 	vector<Double_t> x1, y1, z1, e1, t1;
 
-	// Tree file
-	treeFile = new TFile("avalanche.root", "RECREATE");
-	treeFile->cd();
+	//[[[cog from MMconfig import *; cog.outl("TFile* outputFile = new TFile(\"{}\", \"RECREATE\");".format(conf["avalanche"]["out_filename"]))
+	//[[[end]]]
+	outputFile->cd();
 	TTree* outputTree = new TTree("avalancheTree", "Avalanches");
 	outputTree->Branch("nele", &nele, "nele/I");
 	outputTree->Branch("nelep", &nelep, "nelep/I");
@@ -198,9 +204,10 @@ int main(int argc, char * argv[]) {
 		x1.clear(); y1.clear(); z1.clear(); e1.clear(); t1.clear();
 	}
 
-	treeFile->cd();
-	treeFile->Write();
-	treeFile->Close();
+	outputFile->cd();
+	outputFile->Write();
+	outputFile->Close();
+	inputFile->Close();
 
 	/*
 	viewdrift->Plot();
