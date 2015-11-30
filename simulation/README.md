@@ -22,7 +22,7 @@ Assuming you are in the photoconversion simulation directory:
 
 	`make`
 
-5. Run simulation interactively or with macro file by setting the photoconversion.macro_path in simulation.conf
+5. Run simulation interactively or with macro file by setting the photoconversion.macro_path in [simulation.conf](simulation.conf)
 
 6. If run interactively you might want to init visualisation:
 
