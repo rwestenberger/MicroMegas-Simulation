@@ -7,7 +7,7 @@ echo "Building photoconversion..."
 cd "$project_path/photoconversion"
 mkdir -p "build" && cd "build"
 cmake -DCMAKE_INSTALL_PREFIX=.. ..
-make && make install
+make
 
 echo "Building drift..."
 cd "$project_path/drift"
@@ -17,4 +17,4 @@ echo "Building avalanche..."
 cd "$project_path/avalanche"
 make
 
-echo "Done..."
+echo "Done building..."
