@@ -58,7 +58,7 @@ int main(int argc, char* argv[]) {
 	} else {
 		// use file from conf
 		//[[[cog from MMconfig import *; cog.outl("fileName = \"{}\";".format(conf["drift"]["in_filename"])) ]]]
-		fileName = "photoconversion.root";
+		fileName = "/localscratch/simulation_files/MicroMegas-Simulation/photoconversion.root";
 		//[[[end]]]
 	}
 
@@ -92,7 +92,7 @@ int main(int argc, char* argv[]) {
 	vector<Double_t> x1, y1, z1, e1, t1;
 
 	//[[[cog from MMconfig import *; cog.outl("TFile* outputFile = new TFile(\"{}\", \"RECREATE\");".format(conf["drift"]["out_filename"])) ]]]
-	TFile* outputFile = new TFile("drift.root", "RECREATE");
+	TFile* outputFile = new TFile("/localscratch/simulation_files/MicroMegas-Simulation/drift.root", "RECREATE");
 	//[[[end]]]
 	outputFile->cd();
 	TTree* outputTree = new TTree("driftTree", "Drifts");

@@ -62,7 +62,7 @@ int main(int argc, char** argv) {
 		ui_start()
 	]]]*/
 	G4UImanager* UImanager = G4UImanager::GetUIpointer();
-	UImanager->ApplyCommand("/control/execute ../run.mac");
+	UImanager->ApplyCommand("/control/execute /localscratch/simulation_files/MicroMegas-Simulation/simulation/photoconversion/run.mac");
 	//[[[end]]]
 	
 	delete visManager;
