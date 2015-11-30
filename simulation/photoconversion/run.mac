@@ -31,4 +31,4 @@
 /gun/energy 200 keV
 /gun/direction 0 0 1 # theta = arctan(x/z), x = z*tan(theta)
 
-/run/beamOn 100000
+/run/beamOn 1000

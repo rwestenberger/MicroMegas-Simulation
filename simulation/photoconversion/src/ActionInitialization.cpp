@@ -19,7 +19,7 @@ void ActionInitialization::BuildForMaster() const {
 void ActionInitialization::Build() const {
 	OutputManager* outManager = new OutputManager();
 
-	SetUserAction(new PrimaryGeneratorAction);
+	SetUserAction(new PrimaryGeneratorAction());
 	SetUserAction(new RunAction(outManager));
 	
 	EventAction* eventAction = new EventAction;

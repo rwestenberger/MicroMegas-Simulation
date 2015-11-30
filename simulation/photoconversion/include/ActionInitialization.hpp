@@ -1,9 +1,9 @@
 #ifndef ActionInitialization_h
 #define ActionInitialization_h 1
 
-#include "DetectorConstruction.hpp"
-
 #include "G4VUserActionInitialization.hh"
+
+#include "DetectorConstruction.hpp"
 
 class ActionInitialization : public G4VUserActionInitialization {
 	public:

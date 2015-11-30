@@ -1,17 +1,14 @@
 #ifndef SteppingAction_h
 #define SteppingAction_h 1
 
-#include "OutputManager.hpp"
+#include "EventAction.hpp"
 #include "DetectorConstruction.hpp"
+#include "OutputManager.hpp"
 
 #include "G4UserSteppingAction.hh"
 #include "globals.hh"
 
-class EventAction;
-
 class G4LogicalVolume;
-
-/// Stepping action class
 
 class SteppingAction : public G4UserSteppingAction {
 	public:

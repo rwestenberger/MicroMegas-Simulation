@@ -113,16 +113,16 @@ void PhysicsList::AddStepMax() {
 	// Step limitation seen as a process
 
 	theParticleIterator->reset();
+	/*
 	while ((*theParticleIterator)()) {
 		G4ParticleDefinition* particle = theParticleIterator->value();
 		G4ProcessManager* pmanager = particle->GetProcessManager();
 
-		/*
-		if (fStepMaxProcess->IsApplicable(*particle)) {
-			pmanager->AddDiscreteProcess(fStepMaxProcess);
-		}
-		*/
+		//if (fStepMaxProcess->IsApplicable(*particle)) {
+		//	pmanager->AddDiscreteProcess(fStepMaxProcess);
+		//}
 	}
+	*/
 }
 
 void PhysicsList::SetCuts() {
