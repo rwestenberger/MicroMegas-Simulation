@@ -14,8 +14,10 @@ OutputManager::~OutputManager() {
 	if (fRootFile) delete fRootFile;
 }
 
-void OutputManager::Initialize() { 
-	G4String fileName = "photoconversion.root";
+void OutputManager::Initialize() {
+	//[[[cog from MMconfig import *; import os; cog.outl("G4String fileName = \"{}\";".format(os.path.join(conf["general"]["output_path"], "photoconversion.root"))) ]]]
+	G4String fileName = "/localscratch/simulation_files/MicroMegas-Simulation/results/photoconversion.root";
+	//[[[end]]]
 	fRootFile = new TFile(fileName, "RECREATE");
 
 	if(!fRootFile) {
