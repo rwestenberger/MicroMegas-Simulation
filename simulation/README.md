@@ -20,7 +20,7 @@ Assuming you are in the photoconversion simulation directory:
 
 4. Build Geant4 simulation:
 
-	`make && make install`
+	`make`
 
 5. Run simulation interactively or with macro file:
 
