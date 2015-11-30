@@ -22,13 +22,11 @@ Assuming you are in the photoconversion simulation directory:
 
 	`make`
 
-5. Run simulation interactively or with macro file:
-
-	`../bin/photoconversion [file.mac]`
+5. Run simulation interactively or with macro file by setting the photoconversion.macro_path in simulation.conf
 
 6. If run interactively you might want to init visualisation:
 
-	`/control/execute vis.mac`
+	`/control/execute ../vis.mac`
 
 ## Drift simulation procedure
 Assuming you are in the drift simulation directory:
