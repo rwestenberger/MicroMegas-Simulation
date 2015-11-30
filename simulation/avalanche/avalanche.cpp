@@ -108,9 +108,9 @@ int main(int argc, char * argv[]) {
 
 	// Define the medium
 	MediumMagboltz* gas = new MediumMagboltz();
-	/* [[[cog from MMconfig import *; cog.outl("gas->SetComposition({});".format(conf["detector"]["gas_composition"])) ]]] */
+	//[[[cog from MMconfig import *; cog.outl("gas->SetComposition({});".format(conf["detector"]["gas_composition"])) ]]]
 	gas->SetComposition("ar", 93., "co2", 7.);
-	// [[[end]]]
+	//[[[end]]]
 	gas->SetTemperature(293.15);				// Set the temperature (K)
 	gas->SetPressure(750.);						// Set the pressure (Torr)
 	gas->EnableDrift();							// Allow for drifting in this medium

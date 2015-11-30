@@ -1,5 +1,5 @@
 # Simulation
-Dependencies: FreeCAD, Elmer, gmsh, Garfield++, Geant4, ROOT, python2/3 + cogapp
+Dependencies: FreeCAD, Elmer, gmsh, Garfield++, Geant4, ROOT, python3 + cogapp
 
 For the configuration of the simulated setup see [simulation.conf](simulation.conf). This config file is used to cog the cpp source files and solver files to adapt the simulation accordingly.
 
@@ -10,19 +10,23 @@ Assuming you are in the photoconversion simulation directory:
 
 	`mkdir build && cd build`
 
-2. Configure Geant4 build:
+2. Add simulation directory to your PYTHONPATH:
+
+	`export PYTHONPATH="${PYTHONPATH}:../.."`
+
+3. Configure Geant4 build:
 
 	`cmake -DCMAKE_INSTALL_PREFIX=.. ..`
 
-3. Build Geant4 simulation:
+4. Build Geant4 simulation:
 
 	`make && make install`
 
-4. Run simulation interactively or with macro file:
+5. Run simulation interactively or with macro file:
 
 	`../bin/photoconversion [file.mac]`
 
-5. If run interactively you might want to init visualisation:
+6. If run interactively you might want to init visualisation:
 
 	`/control/execute vis.mac`
 
