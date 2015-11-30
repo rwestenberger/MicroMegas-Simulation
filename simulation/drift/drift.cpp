@@ -57,7 +57,8 @@ int main(int argc, char* argv[]) {
 		fileName = argv[1];
 	} else {
 		// use file from conf
-		//[[[cog from MMconfig import *; cog.outl("fileName = {};".format(conf["drift"]["in_filename"])) ]]]
+		//[[[cog from MMconfig import *; cog.outl("fileName = \"{}\";".format(conf["drift"]["in_filename"])) ]]]
+		fileName = "photoconversion.root";
 		//[[[end]]]
 	}
 
@@ -72,9 +73,8 @@ int main(int argc, char* argv[]) {
 		return 1;
 	}
 	TTree* inputTree = (TTree*)inputFile->Get("coatingTree");
-	numberOfEvents = inputTree->GetEntriesFast();
+	Int_t numberOfEvents = inputTree->GetEntriesFast();
 
-	Int_t numberOfEvents;
 	Double_t inPosX, inPosY, inPosZ;
 	Double_t inPx, inPy, inPz;
 	Double_t inEkin, inT;
@@ -91,7 +91,8 @@ int main(int argc, char* argv[]) {
 	vector<Double_t> x0, y0, z0, e0, t0;
 	vector<Double_t> x1, y1, z1, e1, t1;
 
-	//[[[cog from MMconfig import *; cog.outl("TFile* outputFile = new TFile(\"{}\", \"RECREATE\");".format(conf["drift"]["out_filename"]))
+	//[[[cog from MMconfig import *; cog.outl("TFile* outputFile = new TFile(\"{}\", \"RECREATE\");".format(conf["drift"]["out_filename"])) ]]]
+	TFile* outputFile = new TFile("drift.root", "RECREATE");
 	//[[[end]]]
 	outputFile->cd();
 	TTree* outputTree = new TTree("driftTree", "Drifts");
@@ -103,9 +104,9 @@ int main(int argc, char* argv[]) {
 
 	// Define the medium
 	MediumMagboltz* gas = new MediumMagboltz();
-	/* [[[cog from MMconfig import *; cog.outl("gas->SetComposition({});".format(conf["detector"]["gas_composition"])) ]]] */
+	//[[[cog from MMconfig import *; cog.outl("gas->SetComposition({});".format(conf["detector"]["gas_composition"])) ]]]
 	gas->SetComposition("ar", 93., "co2", 7.);
-	// [[[end]]]
+	//[[[end]]]
 	gas->SetTemperature(293.15);				// Set the temperature (K)
 	gas->SetPressure(750.);						// Set the pressure (Torr)
 	gas->EnableDrift();							// Allow for drifting in this medium

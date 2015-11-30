@@ -56,7 +56,8 @@ int main(int argc, char * argv[]) {
 		fileName = argv[1];
 	} else {
 		// use file from conf
-		//[[[cog from MMconfig import *; cog.outl("fileName = {};".format(conf["ávalanche"]["in_filename"])) ]]]
+		//[[[cog from MMconfig import *; cog.outl("fileName = \"{}\";".format(conf["amplification"]["in_filename"])) ]]]
+		fileName = "drift.root";
 		//[[[end]]]
 	}
 
@@ -71,9 +72,8 @@ int main(int argc, char * argv[]) {
 		return 1;
 	}
 	TTree* inputTree = (TTree*)inputFile->Get("driftTree");
-	numberOfEvents = inputTree->GetEntriesFast();
+	Int_t numberOfEvents = inputTree->GetEntriesFast();
 
-	Int_t numberOfEvents;
 	Int_t inNele;
 	vector<Double_t> *inPosX = 0, *inPosY = 0, *inPosZ = 0, *inEkin = 0, *inT = 0;
 	inputTree->SetBranchAddress("x1", &inPosX); inputTree->SetBranchAddress("y1", &inPosY);	inputTree->SetBranchAddress("z1", &inPosZ);
@@ -88,7 +88,8 @@ int main(int argc, char * argv[]) {
 	vector<Double_t> x0, y0, z0, e0, t0;
 	vector<Double_t> x1, y1, z1, e1, t1;
 
-	//[[[cog from MMconfig import *; cog.outl("TFile* outputFile = new TFile(\"{}\", \"RECREATE\");".format(conf["avalanche"]["out_filename"]))
+	//[[[cog from MMconfig import *; cog.outl("TFile* outputFile = new TFile(\"{}\", \"RECREATE\");".format(conf["amplification"]["out_filename"])) ]]]
+	TFile* outputFile = new TFile("avalanche.root", "RECREATE");
 	//[[[end]]]
 	outputFile->cd();
 	TTree* outputTree = new TTree("avalancheTree", "Avalanches");
