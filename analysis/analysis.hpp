@@ -47,7 +47,7 @@ public :
 
 Avalanche::Avalanche(TTree *tree) : fChain(0)  {
 	if (tree == 0) {
-		TFile *f = new TFile("../simulation/avalanche/avalanche.root");
+		TFile *f = new TFile("../outfiles/avalanche.root");
 		f->GetObject("avalancheTree",tree);
 	}
 	Init(tree);

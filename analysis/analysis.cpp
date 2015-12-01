@@ -19,6 +19,8 @@ void Avalanche::Loop() {
 	cout << nentries << " found, reading..." << endl;
 
 	Double_t transp = 0.;
+	Double_t transp2 = 0.;
+	Int_t nevnts = 0;
 	for (Long64_t jentry=0; jentry<nentries; jentry++) {
 		Long64_t ientry = LoadTree(jentry);
 		if (ientry < 0) break;
@@ -26,9 +28,14 @@ void Avalanche::Loop() {
 
 		//if (Cut()) continue;
 
-		transp += DrawEvent();
+		double single_transp = DrawEvent();
+		if (single_transp > 0.) {
+			nevnts++;
+			transp += single_transp;
+			transp2 += single_transp*single_transp;
+		}
 	}
-	cout << "Mean transparency: " << transp/nentries << " %" << endl;
+	cout << "Mean transparency: " << transp/nevnts << " +/- " << sqrt(transp2/nevnts - transp/nevnts*transp/nevnts) << " %" << endl;
 	cout << "Done!" << endl;
 }
 
@@ -36,8 +43,10 @@ Double_t Avalanche::DrawEvent() {
 	Double_t minX, minY, minZ;
 	Double_t maxX, maxY, maxZ;
 
-	Double_t meshPassCut = -0.0018;
+	Double_t startZCut = 0.009;
+	Double_t meshPassCut = -0.0019;
 	Int_t passedElectrons = 0;
+	Int_t startedElectrons = 0;
 
 	for (Int_t ep=0; ep<x0->size(); ep++) {
 		TPolyLine3D* track = new TPolyLine3D(2);
@@ -84,11 +93,16 @@ Double_t Avalanche::DrawEvent() {
 		if (maxY < y1->at(ep)) maxY = y1->at(ep);
 		if (maxZ < z1->at(ep)) maxZ = z1->at(ep);
 
+		if (z0->at(ep) > startZCut) startedElectrons++;
 		if (z1->at(ep) < meshPassCut) passedElectrons++;
 	}
 	vEvent->SetRange(minX, minY, minZ, maxX, maxY, maxZ);
 
-	return (double)passedElectrons/(double)x0->size()*100.;
+	if (x0->size() > 0) {
+		Double_t transparency = (double)passedElectrons/(double)startedElectrons*100.;
+		return transparency;
+	}
+	return -1.;
 }
 
 bool Avalanche::Cut() {
