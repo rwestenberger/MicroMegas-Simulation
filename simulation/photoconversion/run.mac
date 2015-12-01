@@ -1,34 +1,9 @@
 # Can be run in batch, without graphic
-# or interactively: Idle> /control/execute run1.mac
+# or interactively: Idle> /control/execute run.mac
 
 # Change the default number of workers (in multi-threading mode) 
 #/run/numberOfWorkers 4
 
-# Change Micromegas setup parameters
-/MM/setKaptonThickness 10 um
-/MM/setCoatingThickness 15 um
-/MM/setCoatingMaterial G4_Au
-/MM/setDetectorThickness 1 cm
-/MM/setDetectorMaterial G4_Ar
+/control/execute ../setup_detector.mac
 
-# Change simulation parameters
-/MM/maxStep 1 cm
-/run/setCut 2 um
-
-# Random seeds
-/random/setSeeds 1309865603 1309865603
-
-/run/initialize
-
-# verbosity settings
-#/control/verbose 2
-/run/verbose 1
-#/event/verbose 1
-#/tracking/verbose 1
-
-# run simulation
-/gun/particle gamma
-/gun/energy 200 keV
-/gun/direction 0 0 1 # theta = arctan(x/z), x = z*tan(theta)
-
-/run/beamOn 1000
+/run/beamOn 10000
