@@ -19,7 +19,7 @@ PrimaryGeneratorAction::PrimaryGeneratorAction() : G4VUserPrimaryGeneratorAction
 	G4ParticleTable* particleTable = G4ParticleTable::GetParticleTable();
 	G4ParticleDefinition* particle = particleTable->FindParticle("gamma");
 	fParticleGun->SetParticleDefinition(particle);
-	fParticleGun->SetParticleMomentumDirection(G4ThreeVector(0.,0.,1.));
+	fParticleGun->SetParticleMomentumDirection(G4ThreeVector(0.,0.,-1.));
 	fParticleGun->SetParticleEnergy(200.*keV);
 }
 
@@ -31,7 +31,9 @@ void PrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent) {
 	//G4double x0 = (G4UniformRand()-.5)*10*cm;
 	//G4double y0 = (G4UniformRand()-.5)*10*cm;
 	G4double x0 = 0, y0 = 0;
-	G4double z0 = -1*um;
+	//[[[cog from MMconfig import *; cog.outl("G4double z0 = {}*cm + 1*mm;".format(conf["photoconversion"]["z_kathode"])) ]]]
+	G4double z0 = 1.*cm + 1*mm;
+	//[[[end]]]
 	fParticleGun->SetParticlePosition(G4ThreeVector(x0,y0,z0));
 	
 	/*

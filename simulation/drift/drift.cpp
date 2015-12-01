@@ -29,13 +29,13 @@ int main(int argc, char* argv[]) {
 	cog.outl(
 		"""
 		const int maxAvalancheSize = {}; // constrains the maximum avalanche size, 0 means no limit
-		const double driftField = {}; // V/cm, should be negative
+		const double driftField = {}; // V/cm, should be positive for drift in -z direction
 		double areaXmin = {}, areaXmax = -areaXmin;
 		double areaYmin = {}, areaYmax = -areaYmin;
 		double areaZmin = {}, areaZmax = {}; // begin and end of the drift region, 100µm above the mesh where the field gets inhomogeneous (value from: http://iopscience.iop.org/article/10.1088/1748-0221/6/06/P06011/pdf)
 		""".format(
 			conf["drift"]["max_avalanche_size"],
-			-float(conf["drift"]["field"]),
+			float(conf["drift"]["field"]),
 			-float(conf["detector"]["size_x"])/2.,
 			-float(conf["detector"]["size_y"])/2.,
 			conf["drift"]["z_min"], conf["drift"]["z_max"]
@@ -44,10 +44,10 @@ int main(int argc, char* argv[]) {
 	]]] */
 
 	const int maxAvalancheSize = 0; // constrains the maximum avalanche size, 0 means no limit
-	const double driftField = -600.0; // V/cm, should be negative
+	const double driftField = 600.0; // V/cm, should be positive for drift in -z direction
 	double areaXmin = -5.0, areaXmax = -areaXmin;
 	double areaYmin = -5.0, areaYmax = -areaYmin;
-	double areaZmin = 0., areaZmax = 0.990; // begin and end of the drift region, 100µm above the mesh where the field gets inhomogeneous (value from: http://iopscience.iop.org/article/10.1088/1748-0221/6/06/P06011/pdf)
+	double areaZmin = 100.e-4, areaZmax = 1.; // begin and end of the drift region, 100µm above the mesh where the field gets inhomogeneous (value from: http://iopscience.iop.org/article/10.1088/1748-0221/6/06/P06011/pdf)
 
 	//[[[end]]]
 
@@ -58,7 +58,7 @@ int main(int argc, char* argv[]) {
 	} else {
 		// use file from conf
 		//[[[cog from MMconfig import *; cog.outl("fileName = \"{}\";".format(conf["drift"]["in_filename"])) ]]]
-		fileName = "/localscratch/simulation_files/MicroMegas-Simulation/photoconversion.root";
+		fileName = "/localscratch/simulation_files/MicroMegas-Simulation/outfiles/photoconversion.root";
 		//[[[end]]]
 	}
 
@@ -92,7 +92,7 @@ int main(int argc, char* argv[]) {
 	vector<Double_t> x1, y1, z1, e1, t1;
 
 	//[[[cog from MMconfig import *; cog.outl("TFile* outputFile = new TFile(\"{}\", \"RECREATE\");".format(conf["drift"]["out_filename"])) ]]]
-	TFile* outputFile = new TFile("/localscratch/simulation_files/MicroMegas-Simulation/drift.root", "RECREATE");
+	TFile* outputFile = new TFile("/localscratch/simulation_files/MicroMegas-Simulation/outfiles/drift.root", "RECREATE");
 	//[[[end]]]
 	outputFile->cd();
 	TTree* outputTree = new TTree("driftTree", "Drifts");
@@ -114,7 +114,7 @@ int main(int argc, char* argv[]) {
 	gas->Initialise(true);
 
 	// homogeneous field in z direction in a box
-	SolidBox* box = new SolidBox(0., 0., (areaZmax-areaZmin)/2., (areaXmax-areaXmin)/2., (areaYmax-areaYmin)/2., (areaZmax-areaZmin)/2.);
+	SolidBox* box = new SolidBox(0., 0., (areaZmax+areaZmin)/2., (areaXmax-areaXmin)/2., (areaYmax-areaYmin)/2., (areaZmax-areaZmin)/2.);
 	GeometrySimple* geo = new GeometrySimple();
 	geo->AddSolid(box, gas);
 
