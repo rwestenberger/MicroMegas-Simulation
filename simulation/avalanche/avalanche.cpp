@@ -46,7 +46,7 @@ int main(int argc, char * argv[]) {
 	const int maxAvalancheSize = 0; // constrains the maximum avalanche size, 0 means no limit
 	double areaXmin = -5.0, areaXmax = -areaXmin;
 	double areaYmin = -5.0, areaYmax = -areaYmin;
-	double areaZmin = -20e-4, areaZmax = 100e-4 + 200e-4; // begin and end of the drift region, 100µm above the mesh where the field gets inhomogeneous (value from: http://iopscience.iop.org/article/10.1088/1748-0221/6/06/P06011/pdf)
+	double areaZmin = -20e-4, areaZmax = 100.e-4 + 200e-4; // begin and end of the drift region, 100µm above the mesh where the field gets inhomogeneous (value from: http://iopscience.iop.org/article/10.1088/1748-0221/6/06/P06011/pdf)
 
 	// [[[end]]]
 
@@ -57,7 +57,7 @@ int main(int argc, char * argv[]) {
 	} else {
 		// use file from conf
 		//[[[cog from MMconfig import *; cog.outl("fileName = \"{}\";".format(conf["amplification"]["in_filename"])) ]]]
-		fileName = "/localscratch/simulation_files/MicroMegas-Simulation/drift.root";
+		fileName = "/localscratch/simulation_files/MicroMegas-Simulation/outfiles/drift.root";
 		//[[[end]]]
 	}
 
@@ -89,7 +89,7 @@ int main(int argc, char * argv[]) {
 	vector<Double_t> x1, y1, z1, e1, t1;
 
 	//[[[cog from MMconfig import *; cog.outl("TFile* outputFile = new TFile(\"{}\", \"RECREATE\");".format(conf["amplification"]["out_filename"])) ]]]
-	TFile* outputFile = new TFile("/localscratch/simulation_files/MicroMegas-Simulation/avalanche.root", "RECREATE");
+	TFile* outputFile = new TFile("/localscratch/simulation_files/MicroMegas-Simulation/outfiles/avalanche.root", "RECREATE");
 	//[[[end]]]
 	outputFile->cd();
 	TTree* outputTree = new TTree("avalancheTree", "Avalanches");
@@ -162,7 +162,7 @@ int main(int argc, char * argv[]) {
 		for (int e=0; e<numberOfElectrons; e++) {
 			// Set the initial position [cm], direction, starting time [ns] and initial energy [eV]
 			//[[[cog from MMconfig import *; cog.outl("TVector3 initialPosition = TVector3(inPosX->at(e), inPosY->at(e), {});".format(conf["amplification"]["z_max"])) ]]]
-			TVector3 initialPosition = TVector3(inPosX->at(e), inPosY->at(e), 100e-4);
+			TVector3 initialPosition = TVector3(inPosX->at(e), inPosY->at(e), 100.e-4);
 			//[[[end]]]
 			// using start z value instead of inPosZ->at(e) because of the coordinate offset between drift and avalanche simulation
 			TVector3 initialDirection = TVector3(0., 0., -1.); // 0,0,0 --> for random initial direction
