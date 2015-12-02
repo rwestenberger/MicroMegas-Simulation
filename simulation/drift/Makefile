@@ -13,8 +13,8 @@ LDFLAGS = `root-config --glibs` -lGeom -lgfortran -lm \
 	-L$(LIBDIR) -lGarfield
 
 # profiling and debugging flags
-CFLAGS = $(CFLAGS) -g -pg -static-libgcc
-LDFLAGS = $(LDFLAGS) -g -pg
+#CFLAGS = $(CFLAGS) -g -pg -static-libgcc
+#LDFLAGS = $(LDFLAGS) -g -pg
 
 drift: drift.cpp ../simulation.conf
 	cog.py -r drift.cpp
