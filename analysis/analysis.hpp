@@ -9,97 +9,63 @@
 using namespace std;
 
 class Avalanche {
-public :
-	TTree *fChain;
-	Int_t fCurrent;
+	public:
+		TTree *photoconversionTree, *driftTree, *avalancheTree; 
 
-	// Declaration of leaf types
-	Int_t nele, nelep;
-	vector<Int_t> *status = 0;
-	vector<Double_t> *x0 = 0, *y0 = 0, *z0 = 0, *e0 = 0, *t0 = 0;
-	vector<Double_t> *x1 = 0, *y1 = 0, *z1 = 0, *e1 = 0, *t1 = 0;
+		Double_t pcPosx, pcPosy, pcPosz;
+		Double_t pcPx, pcPy, pcPz;
+		vector<Double_t> *dx0=0, *dy0=0, *dz0=0;
+		vector<Double_t> *dx1=0, *dy1=0, *dz1=0;
+		vector<Double_t> *ax0=0, *ay0=0, *az0=0;
+		vector<Double_t> *ax1=0, *ay1=0, *az1=0;
 
-	// List of branches
-	TBranch *b_nele, *b_nelep, *b_status;
-	TBranch *b_x0, *b_y0, *b_z0, *b_e0, *b_t0;
-	TBranch *b_x1, *b_y1, *b_z1, *b_e1, *b_t1;
+		TCanvas *cEvent;
+		TPad *pEvent;
+		TView *vEvent;
 
-	TCanvas *cEvent;
-	TPad *pEvent;
-	TView *vEvent;
+		Double_t viewXmin = -5., viewXmax = -viewXmin;
+		Double_t viewYmin = -5., viewYmax = -viewYmin;
+		Double_t viewZmin = -0.1, viewZmax = 1.;
 
-	const Double_t lattice_const = 0.00625;
-	const Double_t readoutZ = -0.0152;
-	Double_t viewXmin = -lattice_const*300., viewXmax = -viewXmin;
-	Double_t viewYmin = -lattice_const*300., viewYmax = -viewYmin;
-	Double_t viewZmin = readoutZ, viewZmax = 0.0328;
-
-	Avalanche(TTree *tree=0);
-	virtual ~Avalanche();
-	virtual bool    Cut();
-	virtual Int_t    GetEntry(Long64_t entry);
-	virtual Long64_t LoadTree(Long64_t entry);
-	virtual void     Init(TTree *tree);
-	virtual void     Loop();
-	virtual void     Show(Long64_t entry = -1);
-	Double_t DrawEvent();
+		Avalanche();
+		~Avalanche();
+		void Init();
+		void Loop();
+		void GetEntry(Int_t);
+		void DrawEvent(Int_t);
+		void DrawPhotoconversion();
+		void DrawDrift();
+		void DrawAvalanche();
 };
 
-Avalanche::Avalanche(TTree *tree) : fChain(0)  {
-	if (tree == 0) {
-		TFile *f = new TFile("../outfiles/avalanche.root");
-		f->GetObject("avalancheTree",tree);
-	}
-	Init(tree);
+Avalanche::Avalanche() {
+	TString path = "../outfiles/100k_200keV/";
+
+	TFile* photoconversionFile = new TFile(path + "photoconversion.root");
+	photoconversionTree = (TTree*)photoconversionFile->Get("coatingTree");
+
+	TFile* driftFile = new TFile(path + "drift.root");
+	driftTree = (TTree*)driftFile->Get("driftTree");
+
+	TFile* avalancheFile = new TFile(path + "avalanche.root");
+	avalancheTree = (TTree*)avalancheFile->Get("avalancheTree");
 }
 
-Avalanche::~Avalanche() {
-	if (!fChain) return;
-	delete fChain->GetCurrentFile();
-}
+Avalanche::~Avalanche() {}
 
-Int_t Avalanche::GetEntry(Long64_t entry) {
-	if (!fChain) return 0;
-	return fChain->GetEntry(entry);
-}
+void Avalanche::Init() {
+	photoconversionTree->SetBranchAddress("PosX", &pcPosx); photoconversionTree->SetBranchAddress("PosY", &pcPosy); photoconversionTree->SetBranchAddress("PosZ", &pcPosz);
+	photoconversionTree->SetBranchAddress("Px", &pcPx); photoconversionTree->SetBranchAddress("Py", &pcPy); photoconversionTree->SetBranchAddress("Pz", &pcPz);
 
-Long64_t Avalanche::LoadTree(Long64_t entry) {
-	if (!fChain) return -5;
-	Long64_t centry = fChain->LoadTree(entry);
-	if (centry < 0) return centry;
-	if (fChain->GetTreeNumber() != fCurrent) {
-		fCurrent = fChain->GetTreeNumber();
-	}
-	return centry;
-}
+	driftTree->SetBranchAddress("x0", &dx0); driftTree->SetBranchAddress("y0", &dy0); driftTree->SetBranchAddress("z0", &dz0);
+	driftTree->SetBranchAddress("x1", &dx1); driftTree->SetBranchAddress("y1", &dy1); driftTree->SetBranchAddress("z1", &dz1);
 
-void Avalanche::Init(TTree *tree) {
-	if (!tree) return;
-	fChain = tree;
-	fCurrent = -1;
-
-	fChain->SetBranchAddress("nele", &nele, &b_nele);
-	fChain->SetBranchAddress("nelep", &nelep, &b_nelep);
-	fChain->SetBranchAddress("status", &status, &b_status);
-	fChain->SetBranchAddress("x0", &x0, &b_x0);
-	fChain->SetBranchAddress("y0", &y0, &b_y0);
-	fChain->SetBranchAddress("z0", &z0, &b_z0);
-	fChain->SetBranchAddress("e0", &e0, &b_e0);
-	fChain->SetBranchAddress("t0", &t0, &b_t0);
-	fChain->SetBranchAddress("x1", &x1, &b_x1);
-	fChain->SetBranchAddress("y1", &y1, &b_y1);
-	fChain->SetBranchAddress("z1", &z1, &b_z1);
-	fChain->SetBranchAddress("e1", &e1, &b_e1);
-	fChain->SetBranchAddress("t1", &t1, &b_t1);
+	avalancheTree->SetBranchAddress("x0", &ax0); avalancheTree->SetBranchAddress("y0", &ay0); avalancheTree->SetBranchAddress("z0", &az0);
+	avalancheTree->SetBranchAddress("x1", &ax1); avalancheTree->SetBranchAddress("y1", &ay1); avalancheTree->SetBranchAddress("z1", &az1);
 
 	cEvent = new TCanvas("cEvent", "Event display", 1000, 800);
 	vEvent = TView::CreateView(1);
 	vEvent->SetRange(viewXmin, viewYmin, viewZmin, viewXmax, viewYmax, viewZmax);
 	vEvent->ShowAxis();
 	cEvent->Show();
-}
-
-void Avalanche::Show(Long64_t entry) {
-	if (!fChain) return;
-	fChain->Show(entry);
 }
