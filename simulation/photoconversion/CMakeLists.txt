@@ -31,12 +31,13 @@ set(CMAKE_EXE_LINKER_FLAGS ${ROOT_LD_FLAGS})
 file(GLOB main_source ${PROJECT_SOURCE_DIR}/photoconversion.cpp)
 file(GLOB sources ${PROJECT_SOURCE_DIR}/src/*.cpp)
 file(GLOB headers ${PROJECT_SOURCE_DIR}/include/*.hpp)
+file(GLOB macros ${PROJECT_SOURCE_DIR}/*.mac)
 file(GLOB cog_conf ${PROJECT_SOURCE_DIR}/../simulation.conf)
 
 # Target for source file generation
 add_custom_command(
-	OUTPUT ${main_source} ${sources} ${headers}
-	COMMAND ${COG_EXEC} --verbosity=1 -r ${main_source} ${sources} ${headers}
+	OUTPUT ${main_source} ${sources} ${headers} ${macros}
+	COMMAND ${COG_EXEC} --verbosity=1 -r ${main_source} ${sources} ${headers} ${macros}
 	DEPENDS ${cog_conf}
 	COMMENT "Cogging source files..."
 )
