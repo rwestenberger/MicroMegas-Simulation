@@ -7,11 +7,10 @@ PYTHONPATH=..:$PYTHONPATH
 CFLAGS = -Wall -Wextra -Wno-long-long \
 	`root-config --cflags` \
 	-O3 -fno-common -c \
-	-I$(INCDIR) -I$(HEEDDIR) \
-	-g
+	-I$(INCDIR) -I$(HEEDDIR)
+
 LDFLAGS = `root-config --glibs` -lGeom -lgfortran -lm \
-	-L$(LIBDIR) -lGarfield \
-	-g
+	-L$(LIBDIR) -lGarfield
 
 all: avalanche geometry/geometry/field.result geometry/geometry/mesh.elements geometry/geometry.msh
 
