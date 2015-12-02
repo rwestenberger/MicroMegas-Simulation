@@ -93,6 +93,8 @@ void OutputManager::FillEvent(TTree* tree, G4Track* track) {
 	fZVertex = track->GetVertexPosition().z()/cm;
 	fTrackLength = track->GetTrackLength()/cm;
 	if (tree) tree->Fill();
+
+	track->SetTrackStatus(fStopAndKill);
 }
 
 void OutputManager::PrintStatistic() {
