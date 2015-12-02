@@ -6,4 +6,9 @@
 
 /control/execute ../setup_detector.mac
 
-/run/beamOn 10000
+#[[[cog
+#	from MMconfig import *
+#	cog.outl("/run/beamOn {}".format(conf["general"]["number_of_gammas"]))
+#]]]
+/run/beamOn 100000
+#[[[end]]]
