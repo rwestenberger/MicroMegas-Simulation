@@ -51,23 +51,29 @@ int main(int argc, char* argv[]) {
 
 	//[[[end]]]
 
-	TString fileName;
-	// TODO: Add config support for output and input file path
-	if (argc == 2) {
-		fileName = argv[1];
+	TString inputfileName, outputfileName;
+	if (argc == 3) {
+		inputfileName = argv[1];
+		outputfileName = argv[2];
+	} else if (argc == 2) {
+		cerr << "Only input or output file specified, give both!" << endl;
 	} else {
 		// use file from conf
-		//[[[cog from MMconfig import *; cog.outl("fileName = \"{}\";".format(conf["drift"]["in_filename"])) ]]]
-		fileName = "/localscratch/simulation_files/MicroMegas-Simulation/outfiles/photoconversion.root";
+		/*[[[cog
+		from MMconfig import *
+		cog.outl("inputfileName = \"{}\";".format(conf["drift"]["in_filename"]))
+		cog.outl("outputfileName = \"{}\";".format(conf["drift"]["out_filename"]))
+		]]]*/
+		inputfileName = "/localscratch/simulation_files/MicroMegas-Simulation/outfiles/photoconversion.root";
 		//[[[end]]]
 	}
 
-	if (!fileName) {
-		cerr << "No input file specified or given!" << endl;
+	if (!inputfileName || !outputfileName) {
+		cerr << "No input/output file specified or given!" << endl;
 		return 1;
 	}
 
-	TFile* inputFile = TFile::Open(fileName);
+	TFile* inputFile = TFile::Open(inputfileName);
 	if (!inputFile->IsOpen()) {
 		cout << "Error opening file: " << argv[1] << endl;
 		return 1;
@@ -91,9 +97,7 @@ int main(int argc, char* argv[]) {
 	vector<Double_t> x0, y0, z0, e0, t0;
 	vector<Double_t> x1, y1, z1, e1, t1;
 
-	//[[[cog from MMconfig import *; cog.outl("TFile* outputFile = new TFile(\"{}\", \"RECREATE\");".format(conf["drift"]["out_filename"])) ]]]
-	TFile* outputFile = new TFile("/localscratch/simulation_files/MicroMegas-Simulation/outfiles/drift.root", "RECREATE");
-	//[[[end]]]
+	TFile* outputFile = new TFile(outputfileName, "RECREATE");
 	outputFile->cd();
 	TTree* outputTree = new TTree("driftTree", "Drifts");
 	outputTree->Branch("nele", &nele, "nele/I");
