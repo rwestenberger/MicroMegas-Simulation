@@ -50,23 +50,30 @@ int main(int argc, char * argv[]) {
 
 	// [[[end]]]
 
-	TString fileName;
-	// TODO: Add config support for output and input file path
-	if (argc == 2) {
-		fileName = argv[1];
+	TString inputfileName, outputfileName;
+	if (argc == 3) {
+		inputfileName = argv[1];
+		outputfileName = argv[2];
+	} else if (argc == 2) {
+		cerr << "Only input or output file specified, give both!" << endl;
 	} else {
 		// use file from conf
-		//[[[cog from MMconfig import *; cog.outl("fileName = \"{}\";".format(conf["amplification"]["in_filename"])) ]]]
-		fileName = "/localscratch/simulation_files/MicroMegas-Simulation/outfiles/drift.root";
+		/*[[[cog
+		from MMconfig import *
+		cog.outl("inputfileName = \"{}\";".format(conf["amplification"]["in_filename"]))
+		cog.outl("outputfileName = \"{}\";".format(conf["amplification"]["out_filename"]))
+		]]]*/
+		inputfileName = "/home/rwestenb/simulation/MicroMegas-Simulation/outfiles/drift.root";
+		outputfileName = "/home/rwestenb/simulation/MicroMegas-Simulation/outfiles/avalanche.root";
 		//[[[end]]]
 	}
 
-	if (!fileName) {
-		cerr << "No input file specified or given!" << endl;
+	if (!inputfileName || !outputfileName) {
+		cerr << "No input/output file specified or given!" << endl;
 		return 1;
 	}
 
-	TFile* inputFile = TFile::Open(fileName);
+	TFile* inputFile = TFile::Open(inputfileName);
 	if (!inputFile->IsOpen()) {
 		cout << "Error opening file: " << argv[1] << endl;
 		return 1;
@@ -88,9 +95,7 @@ int main(int argc, char * argv[]) {
 	vector<Double_t> x0, y0, z0, e0, t0;
 	vector<Double_t> x1, y1, z1, e1, t1;
 
-	//[[[cog from MMconfig import *; cog.outl("TFile* outputFile = new TFile(\"{}\", \"RECREATE\");".format(conf["amplification"]["out_filename"])) ]]]
-	TFile* outputFile = new TFile("/localscratch/simulation_files/MicroMegas-Simulation/outfiles/avalanche.root", "RECREATE");
-	//[[[end]]]
+	TFile* outputFile = new TFile(outputfileName, "RECREATE");
 	outputFile->cd();
 	TTree* outputTree = new TTree("avalancheTree", "Avalanches");
 	outputTree->Branch("nele", &nele, "nele/I");
@@ -100,17 +105,39 @@ int main(int argc, char * argv[]) {
 	outputTree->Branch("x1", &x1); outputTree->Branch("y1", &y1); outputTree->Branch("z1", &z1); outputTree->Branch("e1", &e1); outputTree->Branch("t1", &t1);
 
 	// Import an Elmer-created LEM and the weighting field for the readout electrode
-	ComponentElmer* fm = new ComponentElmer(
-		"geometry/geometry/mesh.header",
-		"geometry/geometry/mesh.elements",
-		"geometry/geometry/mesh.nodes",
-		"geometry/dielectrics.dat",
-		"geometry/geometry/field.result",
-		"mm"
-	);
-	fm->EnablePeriodicityX();
-	fm->EnablePeriodicityY();
-	fm->SetWeightingField("geometry/geometry/field_weight.result", "readout");
+	/* [[[cog
+	from MMconfig import *
+
+	cog.outl(
+		"""
+		ComponentElmer* fm = new ComponentElmer(
+			"{0}/geometry/mesh.header",
+			"{0}/geometry/mesh.elements",
+			"{0}/geometry/mesh.nodes",
+			"{0}/dielectrics.dat",
+			"{0}/geometry/field.result",
+			"mm"
+		);
+	        fm->EnablePeriodicityX();
+	        fm->EnablePeriodicityY();
+		//fm->SetWeightingField("{0}/geometry/field_weight.result", "readout");
+		""".format(conf["amplification"]["geometry_path"])
+	)
+	]]] */
+
+		ComponentElmer* fm = new ComponentElmer(
+			"/home/rwestenb/simulation/MicroMegas-Simulation/simulation/avalanche/geometry/geometry/mesh.header",
+			"/home/rwestenb/simulation/MicroMegas-Simulation/simulation/avalanche/geometry/geometry/mesh.elements",
+			"/home/rwestenb/simulation/MicroMegas-Simulation/simulation/avalanche/geometry/geometry/mesh.nodes",
+			"/home/rwestenb/simulation/MicroMegas-Simulation/simulation/avalanche/geometry/dielectrics.dat",
+			"/home/rwestenb/simulation/MicroMegas-Simulation/simulation/avalanche/geometry/geometry/field.result",
+			"mm"
+		);
+	        fm->EnablePeriodicityX();
+	        fm->EnablePeriodicityY();
+		//fm->SetWeightingField("/home/rwestenb/simulation/MicroMegas-Simulation/simulation/avalanche/geometry/geometry/field_weight.result", "readout");
+		
+	//[[[end]]]
 	fm->PrintRange();
 
 	// Define the medium
@@ -164,14 +191,14 @@ int main(int argc, char * argv[]) {
 			//[[[cog from MMconfig import *; cog.outl("TVector3 initialPosition = TVector3(inPosX->at(e), inPosY->at(e), {});".format(conf["amplification"]["z_max"])) ]]]
 			TVector3 initialPosition = TVector3(inPosX->at(e), inPosY->at(e), 100.e-4);
 			//[[[end]]]
-			// using start z value instead of inPosZ->at(e) because of the coordinate offset between drift and avalanche simulation
-			TVector3 initialDirection = TVector3(0., 0., -1.); // 0,0,0 --> for random initial direction
+			//TVector3 initialPosition = TVector3(inPosX->at(e), inPosY->at(e), inPosZ->at(e));
+			TVector3 initialDirection = TVector3(0., 0., -1.); // 0,0,0 for random initial direction
 			Double_t initialTime = inT->at(e);
 			Double_t initialEnergy = inEkin->at(e); // override default energy
 
-			cout << "Initial Time    : " << initialTime << " ns" << endl;
-			cout << "Initial Energy  : " << initialEnergy << " eV" << endl;
-			cout << "Initial position: " << initialPosition.x() << ", " << initialPosition.y()  << ", " << initialPosition.z() << " cm" << endl;
+			//cout << "Initial Time    : " << initialTime << " ns" << endl;
+			//cout << "Initial Energy  : " << initialEnergy << " eV" << endl;
+			//cout << "Initial position: " << initialPosition.x() << ", " << initialPosition.y()  << ", " << initialPosition.z() << " cm" << endl;
 			avalanchemicroscopic->AvalancheElectron(initialPosition.x(), initialPosition.y(), initialPosition.z(), initialTime, initialEnergy, initialDirection.x(), initialDirection.y(), initialDirection.z());
 
 			Int_t ne, ni;
