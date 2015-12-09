@@ -28,7 +28,7 @@ module load software/gnu_parallel
 
 # run parallel on all split files
 # needs about 330M RAM per job
-find ${WD} -regextype posix-egrep -regex '^.*photoconversion_[0-9]+\.root$' | parallel -j 64 --delay 1 --progress --no-notice "$DRIFT_EXEC {} {.}_out.root > {.}_drift.txt"
+find ${WD} -regextype posix-egrep -regex '^.*photoconversion_[0-9]+\.root$' | parallel -j 64 --delay 1 --progress --no-notice "$DRIFT_EXEC {} {.}_drift.root > {.}_drift.txt"
 
 STATUS=$?
 exit $STATUS
