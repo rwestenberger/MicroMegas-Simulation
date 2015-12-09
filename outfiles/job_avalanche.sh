@@ -28,7 +28,7 @@ module load software/gnu_parallel
 
 # run parallel on all split files
 # needs about ?M RAM per job
-find ${WD} -regextype posix-egrep -regex '^.*photoconversion_[0-9]+_drift\.root$' | parallel --colsep '_drift.root' -j 64 --delay 1 --progress --no-notice "$AVAL_EXEC {1}_drift.root {1}_aval.root > {1}_aval.txt"
+find ${WD} -regextype posix-egrep -regex '^.*photoconversion_[0-9]+_drift\.root$' | parallel --colsep '_drift.root' -j 64 --delay 1 --progress --no-notice "$AVAL_EXEC {1}_drift.root {1}_aval.root > {1}_aval.log"
 
 STATUS=$?
 exit $STATUS
