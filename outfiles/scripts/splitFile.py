@@ -81,7 +81,7 @@ def splitFile(args):
 		for output_file_name in output_file_names: print(output_file_name)
 
 def main():
-	parser = argparse.ArgumentParser(description='Split ROOT in multiple files.')
+	parser = argparse.ArgumentParser(description='Split ROOT file in multiple files.')
 	parser.add_argument('inputFileName', help='ROOT input file to split')
 	parser.add_argument('-n', '--nevents', help='Number of events per file', type=int)
 	parser.add_argument('-j', '--njobs', help='Number of jobs to split up to', type=int)
