@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2
 # -*- coding: utf-8 -*-
 
 import argparse, sys, re, math, os
@@ -25,24 +25,19 @@ def joinFiles(input_file_names, output_file_name):
 		for input_tree in input_trees[input_file_name]:
 			if input_tree.GetName() not in [key.GetName() for key in output_file.GetListOfKeys()]:
 				print('Creating new tree: %s [%s]'%(input_tree.GetName(), input_file_name))
-				print([key.GetName() for key in output_file.GetListOfKeys()])
 				output_tree = input_tree.CloneTree(0);
 				output_file.Write()
-				print([key.GetName() for key in output_file.GetListOfKeys()])
-			else:
-				print('Tree %s [%s] already in output file.'%(input_tree.GetName(), input_file_name))
 			for i in range(input_tree.GetEntries()):
 				input_tree.GetEntry(i)
 				output_tree.Fill()
 			output_tree.Write()
-	print([key for key in output_file.GetListOfKeys()])
 	output_file.Close()
 
 	print('Wrote: %s'%(output_file_name))
 
 def main():
 	parser = argparse.ArgumentParser(description='Join multiple ROOT files to one.')
-	parser.add_argument('outputFileName', help='ROOT output files')
+	parser.add_argument('-o', '--outputFileName', help='ROOT output files', required=True)
 	parser.add_argument('inputFileNames', help='ROOT input files to join', nargs='+')
 
 	args = parser.parse_args()
