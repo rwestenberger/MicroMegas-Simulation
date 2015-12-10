@@ -1,4 +1,14 @@
-# Submitting the job
+# Running a job
+
+Apply your simulation settings in simulation.conf.
+
+Rebuild the simulation:
+
+`../simulation/build.sh`
+
+Generate input file:
+
+`./job_photoconversion.sh theta0_200keV_100k`
 
 Split the input file:
 
@@ -7,17 +17,17 @@ Split the input file:
 ## Drift 
 max about 4-5min per event
 
-`bsub -q atlasnodeshort -n 64 -W 60 -R "span[ptile=64]" -app Reserve500M -J MM_100k_simulation_drift ./job_drift.sh theta0_200keV_100k`
+`bsub -q atlasnodeshort -n 64 -W 120 -R "span[ptile=64]" -app Reserve500M -J MM_100k_simulation_drift ./job_drift.sh theta0_200keV_100k`
 
 ## Avalanche
 max about 2-3min per event
 
-`bsub -q atlasnodeshort -n 64 -W 60 -R "span[ptile=64]" -app Reserve500M -J MM_100k_simulation_avalanche ./job_avalanche.sh theta0_200keV_100k`
+`bsub -q atlasnodeshort -n 64 -W 120 -R "span[ptile=64]" -app Reserve500M -J MM_100k_simulation_avalanche ./job_avalanche.sh theta0_200keV_100k`
 
 # Monitoring the job
 
 `watch "bqueues atlasnodeshort && bjobs"`
 
-`tail -n 1 theta0_200keV_100k/photoconversion_*_drift.txt`
+`tail -n 1 theta0_200keV_100k/photoconversion_*_drift.log | grep done`
 
-`tail -n 2 theta0_200keV_100k/photoconversion_*_aval.txt | grep all`
+`tail -n 2 theta0_200keV_100k/photoconversion_*_aval.log | grep all`
