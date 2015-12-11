@@ -1,3 +1,7 @@
+#include <sstream>
+#include <iostream>
+#include <iomanip>
+
 #include <TROOT.h>
 #include <TFile.h>
 #include <TChain.h>
@@ -27,7 +31,7 @@ class Avalanche {
 		Double_t viewYmin = -5., viewYmax = -viewYmin;
 		Double_t viewZmin = -0.1, viewZmax = 1.;
 
-		Avalanche();
+		Avalanche(TString);
 		~Avalanche();
 		void Init();
 		void Loop();
@@ -38,16 +42,16 @@ class Avalanche {
 		void DrawAvalanche();
 };
 
-Avalanche::Avalanche() {
-	TString path = "../outfiles/100k_200keV/";
+Avalanche::Avalanche(TString path) {
+	cout << "Using \"" << path << "\" to get photoconversion/drift/avalanche.root." << endl;
 
-	TFile* photoconversionFile = new TFile(path + "photoconversion.root");
+	TFile* photoconversionFile = new TFile(path + "/photoconversion.root");
 	photoconversionTree = (TTree*)photoconversionFile->Get("coatingTree");
 
-	TFile* driftFile = new TFile(path + "drift.root");
+	TFile* driftFile = new TFile(path + "/drift.root");
 	driftTree = (TTree*)driftFile->Get("driftTree");
 
-	TFile* avalancheFile = new TFile(path + "avalanche.root");
+	TFile* avalancheFile = new TFile(path + "/avalanche.root");
 	avalancheTree = (TTree*)avalancheFile->Get("avalancheTree");
 }
 

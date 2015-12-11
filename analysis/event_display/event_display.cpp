@@ -1,3 +1,4 @@
+#include <stdlib.h>
 #include <sstream>
 #include <iostream>
 #include <iomanip>
@@ -29,7 +30,7 @@ void Avalanche::DrawPhotoconversion() {
 }
 
 void Avalanche::DrawDrift() {
-	for (uint e=1; e<dx0->size(); e++) {
+	for (uint e=1; e<dx0->size(); e+=5) {
 		TPolyLine3D* track = new TPolyLine3D(2);
 		track->SetPoint(0, dx0->at(e), dy0->at(e), dz0->at(e));
 		track->SetPoint(1, dx1->at(e), dy1->at(e), dz1->at(e));
@@ -76,10 +77,17 @@ void Avalanche::Loop() {
 	}
 }
 
-int main(int argc, char * argv[]) {
+int main(int argc, char* argv[]) {
+	if (argc != 2) {
+		cout << "Usage: " << argv[0] << " SIMULATION_PATH" << endl;
+		return 1;
+	}
+
+	TString inputDirectory = argv[1];
+
 	TApplication app("app", &argc, argv);
 
-	Avalanche a;
+	Avalanche a = Avalanche(inputDirectory);
 	a.Init();
 	a.Loop();
 	app.Run(kTRUE);

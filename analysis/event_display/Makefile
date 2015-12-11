@@ -11,8 +11,8 @@ LDFLAGS = `root-config --glibs` -lGeom -lgfortran -lm
 LDFLAGS += -L$(LIBDIR)
 LDFLAGS += -g
 
-analysis: analysis.cpp analysis.hpp
-	$(CXX) $(CFLAGS) analysis.cpp analysis.hpp
-	$(CXX) -o analysis analysis.o $(LDFLAGS)
-	rm analysis.o
+event_display: event_display.cpp event_display.hpp
+	$(CXX) $(CFLAGS) event_display.cpp event_display.hpp
+	$(CXX) -o event_display event_display.o $(LDFLAGS)
+	rm event_display.o
 
