@@ -18,6 +18,7 @@ class Avalanche {
 
 		Double_t pcPosx, pcPosy, pcPosz;
 		Double_t pcPx, pcPy, pcPz;
+		vector<Double_t> *dt0=0, *dt1=0;
 		vector<Double_t> *dx0=0, *dy0=0, *dz0=0;
 		vector<Double_t> *dx1=0, *dy1=0, *dz1=0;
 		vector<Double_t> *ax0=0, *ay0=0, *az0=0;
@@ -34,7 +35,7 @@ class Avalanche {
 		Avalanche(TString);
 		~Avalanche();
 		void Init();
-		void Loop();
+		void Loop(Int_t);
 		void GetEntry(Int_t);
 		void DrawEvent(Int_t);
 		void DrawPhotoconversion();
@@ -63,6 +64,7 @@ void Avalanche::Init() {
 
 	driftTree->SetBranchAddress("x0", &dx0); driftTree->SetBranchAddress("y0", &dy0); driftTree->SetBranchAddress("z0", &dz0);
 	driftTree->SetBranchAddress("x1", &dx1); driftTree->SetBranchAddress("y1", &dy1); driftTree->SetBranchAddress("z1", &dz1);
+	driftTree->SetBranchAddress("t0", &dt0); driftTree->SetBranchAddress("t1", &dt1);
 
 	avalancheTree->SetBranchAddress("x0", &ax0); avalancheTree->SetBranchAddress("y0", &ay0); avalancheTree->SetBranchAddress("z0", &az0);
 	avalancheTree->SetBranchAddress("x1", &ax1); avalancheTree->SetBranchAddress("y1", &ay1); avalancheTree->SetBranchAddress("z1", &az1);

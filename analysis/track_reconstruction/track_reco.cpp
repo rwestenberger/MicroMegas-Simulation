@@ -2,22 +2,53 @@
 #include <sstream>
 #include <iostream>
 #include <iomanip>
+#include <algorithm>
 
 #include <TStyle.h>
-#include <TApplication.h>
 #include <TCanvas.h>
-#include <TH3F.h>
+#include <TVector3.h>
 
 #include "track_reco.hpp"
 
 using namespace std;
 
-void TrackReconstruction::DrawEvents() {
-	TH3F* event = new TH3F("event", "Test", 100, viewXmin, viewXmax, 100, viewYmin, viewYmax, 100, -0.1, 0.1);
-	event->SetMarkerStyle(20);
+Double_t TrackReconstruction::GetZ0fromT1(Double_t t1, Double_t startTime) {
+	// Calculates the electron origin from arrival time t1 and startTime (time of first hit)
+	Double_t driftVelocity = 4.6698e-3; // cm/ns
 
-	avalancheTree->Draw("y1:x1:t1>>event", "z1<-0.0019 && z1>-0.0021", "col");
-	event->Draw();
+	return driftVelocity * (t1 - startTime);
+}
+
+void TrackReconstruction::Analysis() {
+	Long64_t nentries = avalancheTree->GetEntriesFast();
+
+	for (int i=0; i<nentries; i++) {
+		GetEntry(i);
+
+		if (dx0->size() < 2) continue; // no track reconstruction possible
+
+		TVector3 pcDir = TVector3(pcPx, pcPy, pcPz);
+
+		// calculate bounding box
+		Int_t min_t_i = min_element(dt1->begin(), dt1->end()) - dt1->begin();
+		Int_t max_t_i = max_element(dt1->begin(), dt1->end()) - dt1->begin();
+
+		TVector3 upperCornerTrue = TVector3(dx1->at(max_t_i), dy1->at(max_t_i), dz0->at(max_t_i));
+		TVector3 lowerCornerTrue = TVector3(dx1->at(min_t_i), dy1->at(min_t_i), dz1->at(min_t_i));
+
+		TVector3 upperCornerReco = TVector3(dx1->at(max_t_i), dy1->at(max_t_i), GetZ0fromT1(dt1->at(max_t_i), dt1->at(min_t_i)));
+
+		TVector3 recoDirTrue = lowerCornerTrue - upperCornerTrue;
+		recoDirTrue.SetMag(1.);
+		TVector3 recoDirReco = lowerCornerTrue - upperCornerReco;
+		recoDirReco.SetMag(1.);
+
+		phiRecoHist->Fill((pcDir.Phi()-recoDirTrue.Phi())*TMath::RadToDeg(), (pcDir.Phi()-TMath::Pi()/2.)*TMath::RadToDeg());
+		thetaRecoHist->Fill((pcDir.Theta()-recoDirTrue.Theta())*TMath::RadToDeg(), (pcDir.Theta()-TMath::Pi()/2.)*TMath::RadToDeg());
+
+		angleRecoHist->Fill(recoDirReco.Angle(pcDir)*TMath::RadToDeg());
+		recoQualityHist->Fill(recoDirReco.Angle(recoDirTrue));
+	}
 }
 
 int main(int argc, char* argv[]) {
@@ -28,9 +59,6 @@ int main(int argc, char* argv[]) {
 
 	TString inputDirectory = argv[1];
 
-	TApplication app("app", &argc, argv);
-
 	TrackReconstruction tr = TrackReconstruction(inputDirectory);
 	tr.Run();
-	app.Run(kTRUE);
 }
