@@ -14,7 +14,7 @@
 
 - Split the input file:
 
-`./scripts/splitFile.py theta0_200keV_100k/photoconversion.root -j 64 -t coatingTree -b`
+`./job_split.sh theta0_200keV_100k`
 
 ## Drift job submission
 max about 4-5min per event
