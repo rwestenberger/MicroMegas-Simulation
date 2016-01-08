@@ -3,6 +3,7 @@
 /control/saveHistory
 /run/verbose 2
 
+/control/macroPath ..
 /control/execute setup_detector.mac
 
 /vis/open OGL 1280x920-0+0
