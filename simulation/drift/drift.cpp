@@ -53,8 +53,10 @@ int main(int argc, char* argv[]) {
 
 	TString inputfileName, outputfileName;
 	if (argc == 3) {
+		cout << "Using command line parameters as in and out files.";
 		inputfileName = argv[1];
 		outputfileName = argv[2];
+		cout << inputfileName << " -> " << outputfileName << endl;
 	} else if (argc == 2) {
 		cerr << "Only input or output file specified, give both!" << endl;
 	} else {
@@ -65,6 +67,7 @@ int main(int argc, char* argv[]) {
 		cog.outl("outputfileName = \"{}\";".format(conf["drift"]["out_filename"]))
 		]]]*/
 		inputfileName = "/localscratch/simulation_files/MicroMegas-Simulation/outfiles/photoconversion.root";
+		outputfileName = "/localscratch/simulation_files/MicroMegas-Simulation/outfiles/drift.root";
 		//[[[end]]]
 	}
 
@@ -108,8 +111,12 @@ int main(int argc, char* argv[]) {
 
 	// Define the medium
 	MediumMagboltz* gas = new MediumMagboltz();
-	//[[[cog from MMconfig import *; cog.outl("gas->SetComposition({});".format(conf["detector"]["gas_composition"])) ]]]
-	gas->SetComposition("ar", 93., "co2", 7.);
+	/*[[[cog
+	from MMconfig import *
+	gas_composition = eval(conf["detector"]["gas_composition"])
+	cog.outl("gas->SetComposition({});".format(', '.join(['\"{}\",{}'.format(comp, fract) for comp, fract in gas_composition.items()])))
+	]]]*/
+	gas->SetComposition("co2",7.0, "ar",93.0);
 	//[[[end]]]
 	gas->SetTemperature(293.15);				// Set the temperature (K)
 	gas->SetPressure(750.);						// Set the pressure (Torr)

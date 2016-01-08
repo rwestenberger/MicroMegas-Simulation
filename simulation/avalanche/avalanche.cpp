@@ -63,8 +63,8 @@ int main(int argc, char * argv[]) {
 		cog.outl("inputfileName = \"{}\";".format(conf["amplification"]["in_filename"]))
 		cog.outl("outputfileName = \"{}\";".format(conf["amplification"]["out_filename"]))
 		]]]*/
-		inputfileName = "/home/rwestenb/simulation/MicroMegas-Simulation/outfiles/drift.root";
-		outputfileName = "/home/rwestenb/simulation/MicroMegas-Simulation/outfiles/avalanche.root";
+		inputfileName = "/localscratch/simulation_files/MicroMegas-Simulation/outfiles/drift.root";
+		outputfileName = "/localscratch/simulation_files/MicroMegas-Simulation/outfiles/avalanche.root";
 		//[[[end]]]
 	}
 
@@ -126,24 +126,28 @@ int main(int argc, char * argv[]) {
 	]]] */
 
 		ComponentElmer* fm = new ComponentElmer(
-			"/home/rwestenb/simulation/MicroMegas-Simulation/simulation/avalanche/geometry/geometry/mesh.header",
-			"/home/rwestenb/simulation/MicroMegas-Simulation/simulation/avalanche/geometry/geometry/mesh.elements",
-			"/home/rwestenb/simulation/MicroMegas-Simulation/simulation/avalanche/geometry/geometry/mesh.nodes",
-			"/home/rwestenb/simulation/MicroMegas-Simulation/simulation/avalanche/geometry/dielectrics.dat",
-			"/home/rwestenb/simulation/MicroMegas-Simulation/simulation/avalanche/geometry/geometry/field.result",
+			"/localscratch/simulation_files/MicroMegas-Simulation/simulation/avalanche/geometry/geometry/mesh.header",
+			"/localscratch/simulation_files/MicroMegas-Simulation/simulation/avalanche/geometry/geometry/mesh.elements",
+			"/localscratch/simulation_files/MicroMegas-Simulation/simulation/avalanche/geometry/geometry/mesh.nodes",
+			"/localscratch/simulation_files/MicroMegas-Simulation/simulation/avalanche/geometry/dielectrics.dat",
+			"/localscratch/simulation_files/MicroMegas-Simulation/simulation/avalanche/geometry/geometry/field.result",
 			"mm"
 		);
 	        fm->EnablePeriodicityX();
 	        fm->EnablePeriodicityY();
-		//fm->SetWeightingField("/home/rwestenb/simulation/MicroMegas-Simulation/simulation/avalanche/geometry/geometry/field_weight.result", "readout");
+		//fm->SetWeightingField("/localscratch/simulation_files/MicroMegas-Simulation/simulation/avalanche/geometry/geometry/field_weight.result", "readout");
 		
 	//[[[end]]]
 	fm->PrintRange();
 
 	// Define the medium
 	MediumMagboltz* gas = new MediumMagboltz();
-	//[[[cog from MMconfig import *; cog.outl("gas->SetComposition({});".format(conf["detector"]["gas_composition"])) ]]]
-	gas->SetComposition("ar", 93., "co2", 7.);
+	/*[[[cog
+	from MMconfig import *
+	gas_composition = eval(conf["detector"]["gas_composition"])
+	cog.outl("gas->SetComposition({});".format(', '.join(['\"{}\",{}'.format(comp, fract) for comp, fract in gas_composition.items()])))
+	]]]*/
+	gas->SetComposition("ar",93.0, "co2",7.0);
 	//[[[end]]]
 	gas->SetTemperature(293.15);				// Set the temperature (K)
 	gas->SetPressure(750.);						// Set the pressure (Torr)

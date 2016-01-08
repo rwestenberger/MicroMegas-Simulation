@@ -62,23 +62,59 @@ G4VPhysicalVolume* DetectorConstruction::Construct() {
 	fPhysKathode = new G4PVPlacement(0, pos_kathode, fLogicKathode, "Kathode", fLogicWorld, false, 0, checkOverlaps);
 
 	// Coating
-	G4double sizeX_coating = sizeX_kathode, sizeY_coating = sizeY_kathode;
-	G4Material* mat_coating;
-	if (fCoatingMaterial) mat_coating = fCoatingMaterial;
-	else mat_coating = nist->FindOrBuildMaterial("G4_Au");
+	//[[[cog from MMconfig import *; cog.outl("G4bool use_coating = {};".format(conf["detector"]["use_coating"])) ]]]
+	G4bool use_coating = true;
+	//[[[end]]]
+	if (use_coating) {
+		G4double sizeX_coating = sizeX_kathode, sizeY_coating = sizeY_kathode;
+		G4Material* mat_coating;
+		if (fCoatingMaterial) mat_coating = fCoatingMaterial;
+		else mat_coating = nist->FindOrBuildMaterial("G4_Au");
 
-	G4Box* solid_coating = new G4Box("Coating", .5*sizeX_coating, .5*sizeY_coating, .5*fCoatingThickness);
-	fLogicCoating = new G4LogicalVolume(solid_coating, mat_coating, "Coating");
-	G4VisAttributes* visatt_coating = new G4VisAttributes(G4Colour(1., 1., 0., .5));
-	//visatt_coating->SetForceWireframe(true);
-	fLogicCoating->SetVisAttributes(visatt_coating);
-	fPhysCoating = new G4PVPlacement(0, pos_coating, fLogicCoating, "Coating", fLogicWorld, false, 0, checkOverlaps);
+		G4Box* solid_coating = new G4Box("Coating", .5*sizeX_coating, .5*sizeY_coating, .5*fCoatingThickness);
+		fLogicCoating = new G4LogicalVolume(solid_coating, mat_coating, "Coating");
+		G4VisAttributes* visatt_coating = new G4VisAttributes(G4Colour(1., 1., 0., .5));
+		//visatt_coating->SetForceWireframe(true);
+		fLogicCoating->SetVisAttributes(visatt_coating);
+		fPhysCoating = new G4PVPlacement(0, pos_coating, fLogicCoating, "Coating", fLogicWorld, false, 0, checkOverlaps);
+	}
 
 	// Detector
 	G4double sizeX_detector = sizeX_world, sizeY_detector = sizeY_world;
+
+	// CO2
+	G4Element* elC = nist->FindOrBuildElement("G4_C");
+	G4Element* elO = nist->FindOrBuildElement("G4_O");
+	G4Material* co2 = new G4Material("co2", 1.977*kg/m3, 2, kStateGas);
+	co2->AddElement(elC, 1);
+	co2->AddElement(elO, 2);
+
+	// Argon
+	G4Material* ar = nist->FindOrBuildMaterial("Ar");
+
+
 	G4Material* mat_detector;
-	if (fDetectorMaterial) mat_detector = fDetectorMaterial;
-	else mat_detector = nist->FindOrBuildMaterial("G4_Ar");
+	/*[[[cog
+	from MMconfig import *
+	gas_composition = eval(conf["detector"]["gas_composition"])
+	cog.outl(
+		'G4Material* gas_composition = new G4Material("GasComposition", {}*kg/m3, {}, kStateGas);'.format(
+			conf["detector"]["gas_composition_density"],
+			len(gas_composition)
+		)
+	)
+	for component, fract in gas_composition.items():
+		cog.outl('gas_composition->AddMaterial({}, {});'.format(component, fract))
+	]]]*/
+	G4Material* gas_composition = new G4Material("GasComposition", 1.784*kg/m3, 2, kStateGas);
+	gas_composition->AddMaterial(co2, 7.0);
+	gas_composition->AddMaterial(ar, 93.0);
+	//[[[end]]]
+
+	mat_detector = gas_composition;
+
+	//if (fDetectorMaterial) mat_detector = fDetectorMaterial;
+	//else mat_detector = nist->FindOrBuildMaterial("G4_Ar");
 
 	G4Box* solid_detector = new G4Box("Detector", .5*sizeX_detector, .5*sizeY_detector, .5*fDetectorThickness);
 	fLogicDetector = new G4LogicalVolume(solid_detector, mat_detector, "Detector");
