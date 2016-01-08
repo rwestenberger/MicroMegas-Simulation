@@ -12,6 +12,7 @@
 #include "G4PVPlacement.hh"
 #include "G4VisAttributes.hh"
 #include "G4SystemOfUnits.hh"
+#include "G4PhysicalConstants.hh"
 
 DetectorConstruction::DetectorConstruction() : G4VUserDetectorConstruction(), fDetectorMessenger(0) {
 	fDetectorMessenger = new DetectorMessenger(this);
@@ -30,6 +31,11 @@ G4VPhysicalVolume* DetectorConstruction::Construct() {
 
 	G4bool checkOverlaps = true;
 
+	//[[[cog from MMconfig import *; cog.outl("G4bool use_coating = {};".format(conf["detector"]["use_coating"].lower())) ]]]
+	G4bool use_coating = false;
+	//[[[end]]]
+	if (!use_coating) fCoatingThickness = 0.*um;
+
 	//[[[cog from MMconfig import *; cog.outl("G4double z_kathode = {}*cm;".format(conf["photoconversion"]["z_kathode"])) ]]]
 	G4double z_kathode = 1.*cm;
 	//[[[end]]]
@@ -40,9 +46,11 @@ G4VPhysicalVolume* DetectorConstruction::Construct() {
 	//[[[end]]]
 	G4double sizeZ_world  = 2.*(fKaptonThickness + fCoatingThickness + z_kathode + 1*cm); // 1cm space above the detector
 	G4Material* mat_air = nist->FindOrBuildMaterial("G4_AIR");
+	G4Material* mat_vacuum = new G4Material("Vacuum", 1.e-5*g/cm3, 1, kStateGas, STP_Temperature, 2.e-2*bar);
+	mat_vacuum->AddMaterial(mat_air, 1.);
 
 	G4Box* solid_world = new G4Box("World", .5*sizeX_world, .5*sizeY_world, .5*sizeZ_world);
-	fLogicWorld = new G4LogicalVolume(solid_world, mat_air, "World");
+	fLogicWorld = new G4LogicalVolume(solid_world, mat_vacuum, "World");
 	fPhysWorld = new G4PVPlacement(0, G4ThreeVector(), fLogicWorld, "World", 0, false, 0, checkOverlaps);
 	
 	// volume positions
@@ -62,9 +70,6 @@ G4VPhysicalVolume* DetectorConstruction::Construct() {
 	fPhysKathode = new G4PVPlacement(0, pos_kathode, fLogicKathode, "Kathode", fLogicWorld, false, 0, checkOverlaps);
 
 	// Coating
-	//[[[cog from MMconfig import *; cog.outl("G4bool use_coating = {};".format(conf["detector"]["use_coating"])) ]]]
-	G4bool use_coating = true;
-	//[[[end]]]
 	if (use_coating) {
 		G4double sizeX_coating = sizeX_kathode, sizeY_coating = sizeY_kathode;
 		G4Material* mat_coating;
@@ -85,9 +90,15 @@ G4VPhysicalVolume* DetectorConstruction::Construct() {
 	// Drift gases, add your own here if you want to use it
 	// Argon
 	G4Material* ar = nist->FindOrBuildMaterial("G4_Ar");
+	// density(pressure) = density_1bar * pressure/1bar
+	G4double pressure = 5.;
+	G4Material* ar_pressure = new G4Material("ar_pressure", (ar->GetDensity()/(kg/m3)*pressure)*(kg/m3), 1, kStateGas, STP_Temperature, pressure*bar);
+	ar_pressure->AddMaterial(ar, 1.);
 
 	// Xenon
 	G4Material* xe = nist->FindOrBuildMaterial("G4_Xe");
+	G4Material* xe_pressure = new G4Material("xe_pressure", (xe->GetDensity()/(kg/m3)*pressure)*(kg/m3), 1, kStateGas, STP_Temperature, pressure*bar);
+	xe_pressure->AddMaterial(xe, 1.);
 
 	// quenching gases
 	G4Element* elC = nist->FindOrBuildElement("C");
@@ -120,18 +131,17 @@ G4VPhysicalVolume* DetectorConstruction::Construct() {
 	gas_composition = eval(conf["detector"]["gas_composition"])
 	cog.outl(
 		'G4double composition_density = ({})/{};'.format(
-			' + '.join(['{}->GetDensity()/(kg/m3)*{}'.format(component, fraction) for component, fraction in gas_composition.items()]),
+			' + '.join(['{}->GetDensity()*{}'.format(component, fraction) for component, fraction in gas_composition.items()]),
 			sum(gas_composition.values())
 		)
 	)
 	cog.outl('G4Material* gas_composition = new G4Material("GasComposition", composition_density, {}, kStateGas);'.format(len(gas_composition)))
 	for component, fract in gas_composition.items():
-		cog.outl('gas_composition->AddMaterial({}, {});'.format(component, fract/100.))
+		cog.outl('gas_composition->AddMaterial({}, {});'.format(component, fract))
 	]]]*/
-	G4double composition_density = (co2->GetDensity()/(kg/m3)*7.0 + ar->GetDensity()/(kg/m3)*93.0)/100.0;
-	G4Material* gas_composition = new G4Material("GasComposition", composition_density, 2, kStateGas);
-	gas_composition->AddMaterial(co2, 0.07);
-	gas_composition->AddMaterial(ar, 0.93);
+	G4double composition_density = (xe_pressure->GetDensity()*1.0)/1.0;
+	G4Material* gas_composition = new G4Material("GasComposition", composition_density, 1, kStateGas);
+	gas_composition->AddMaterial(xe_pressure, 1.0);
 	//[[[end]]]
 
 	mat_detector = gas_composition;
