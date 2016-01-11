@@ -37,7 +37,7 @@ G4VPhysicalVolume* DetectorConstruction::Construct() {
 	if (!use_coating) fCoatingThickness = 0.*um;
 
 	//[[[cog from MMconfig import *; cog.outl("G4double z_kathode = {}*cm;".format(conf["photoconversion"]["z_kathode"])) ]]]
-	G4double z_kathode = 1.*cm;
+	G4double z_kathode = 3.*cm;
 	//[[[end]]]
 
 	// World
@@ -88,10 +88,10 @@ G4VPhysicalVolume* DetectorConstruction::Construct() {
 	G4double sizeX_detector = sizeX_world, sizeY_detector = sizeY_world;
 
 	// Drift gases, add your own here if you want to use it
+	G4double pressure = 5.;
 	// Argon
 	G4Material* ar = nist->FindOrBuildMaterial("G4_Ar");
 	// density(pressure) = density_1bar * pressure/1bar
-	G4double pressure = 5.;
 	G4Material* ar_pressure = new G4Material("ar_pressure", (ar->GetDensity()/(kg/m3)*pressure)*(kg/m3), 1, kStateGas, STP_Temperature, pressure*bar);
 	ar_pressure->AddMaterial(ar, 1.);
 
@@ -139,9 +139,9 @@ G4VPhysicalVolume* DetectorConstruction::Construct() {
 	for component, fract in gas_composition.items():
 		cog.outl('gas_composition->AddMaterial({}, {});'.format(component, fract))
 	]]]*/
-	G4double composition_density = (xe_pressure->GetDensity()*1.0)/1.0;
+	G4double composition_density = (ar->GetDensity()*1.0)/1.0;
 	G4Material* gas_composition = new G4Material("GasComposition", composition_density, 1, kStateGas);
-	gas_composition->AddMaterial(xe_pressure, 1.0);
+	gas_composition->AddMaterial(ar, 1.0);
 	//[[[end]]]
 
 	mat_detector = gas_composition;
