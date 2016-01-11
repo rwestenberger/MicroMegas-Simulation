@@ -137,7 +137,7 @@ G4VPhysicalVolume* DetectorConstruction::Construct() {
 	)
 	cog.outl('G4Material* gas_composition = new G4Material("GasComposition", composition_density, {}, kStateGas);'.format(len(gas_composition)))
 	for component, fract in gas_composition.items():
-		cog.outl('gas_composition->AddMaterial({}, {});'.format(component, fract))
+		cog.outl('gas_composition->AddMaterial({}, {}*perCent);'.format(component, fract))
 	]]]*/
 	G4double composition_density = (ar->GetDensity()*1.0)/1.0;
 	G4Material* gas_composition = new G4Material("GasComposition", composition_density, 1, kStateGas);
