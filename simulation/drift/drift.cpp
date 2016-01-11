@@ -47,7 +47,7 @@ int main(int argc, char* argv[]) {
 	const double driftField = 600.0; // V/cm, should be positive for drift in -z direction
 	double areaXmin = -5.0, areaXmax = -areaXmin;
 	double areaYmin = -5.0, areaYmax = -areaYmin;
-	double areaZmin = 100.e-4, areaZmax = 1.; // begin and end of the drift region, 100µm above the mesh where the field gets inhomogeneous (value from: http://iopscience.iop.org/article/10.1088/1748-0221/6/06/P06011/pdf)
+	double areaZmin = 100.e-4, areaZmax = 3.; // begin and end of the drift region, 100µm above the mesh where the field gets inhomogeneous (value from: http://iopscience.iop.org/article/10.1088/1748-0221/6/06/P06011/pdf)
 
 	//[[[end]]]
 
@@ -115,11 +115,13 @@ int main(int argc, char* argv[]) {
 	from MMconfig import *
 	gas_composition = eval(conf["detector"]["gas_composition"])
 	cog.outl("gas->SetComposition({});".format(', '.join(['\"{}\",{}'.format(comp, fract) for comp, fract in gas_composition.items()])))
+	cog.outl("gas->SetTemperature({}+273.15);".format(conf["detector"]["temperature"]))
+	cog.outl("gas->SetPressure({} * 7.50062);".format(conf["detector"]["pressure"]))
 	]]]*/
-	gas->SetComposition("co2",7.0, "ar",93.0);
+	gas->SetComposition("ar",93.0, "co2",7.0);
+	gas->SetTemperature(20.+273.15);
+	gas->SetPressure(100. * 7.50062);
 	//[[[end]]]
-	gas->SetTemperature(293.15);				// Set the temperature (K)
-	gas->SetPressure(750.);						// Set the pressure (Torr)
 	gas->EnableDrift();							// Allow for drifting in this medium
 	gas->SetMaxElectronEnergy(200.);
 	gas->Initialise(true);

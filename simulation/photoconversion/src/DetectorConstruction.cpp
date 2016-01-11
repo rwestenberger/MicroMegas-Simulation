@@ -87,23 +87,21 @@ G4VPhysicalVolume* DetectorConstruction::Construct() {
 	// Detector
 	G4double sizeX_detector = sizeX_world, sizeY_detector = sizeY_world;
 
-	// Drift gases, add your own here if you want to use it
-	G4double pressure = 5.;
+	// Drift and quenching gases, add your own here if you want to use it
 	// Argon
 	G4Material* ar = nist->FindOrBuildMaterial("G4_Ar");
-	// density(pressure) = density_1bar * pressure/1bar
-	G4Material* ar_pressure = new G4Material("ar_pressure", (ar->GetDensity()/(kg/m3)*pressure)*(kg/m3), 1, kStateGas, STP_Temperature, pressure*bar);
-	ar_pressure->AddMaterial(ar, 1.);
 
 	// Xenon
 	G4Material* xe = nist->FindOrBuildMaterial("G4_Xe");
-	G4Material* xe_pressure = new G4Material("xe_pressure", (xe->GetDensity()/(kg/m3)*pressure)*(kg/m3), 1, kStateGas, STP_Temperature, pressure*bar);
-	xe_pressure->AddMaterial(xe, 1.);
+
+	// Neon
+	G4Material* ne = nist->FindOrBuildMaterial("G4_Ne");
 
 	// quenching gases
-	G4Element* elC = nist->FindOrBuildElement("C");
 	G4Element* elH = nist->FindOrBuildElement("H");
 	G4Element* elO = nist->FindOrBuildElement("O");
+	G4Element* elF = nist->FindOrBuildElement("F");
+	G4Element* elC = nist->FindOrBuildElement("C");
 
 	// CO2
 	G4Material* co2 = new G4Material("CO2", 1.977*kg/m3, 2);
@@ -125,23 +123,31 @@ G4VPhysicalVolume* DetectorConstruction::Construct() {
 	c4h10->AddElement(elC, 4);
 	c4h10->AddElement(elH, 10);
 
+	// CF4 - Tetrafluoromethane
+	G4Material* cf4 = new G4Material("CF4", 3.72*kg/m3, 2);
+	cf4->AddElement(elC, 1);
+	cf4->AddElement(elF, 4);
+
 	G4Material* mat_detector;
 	/*[[[cog
 	from MMconfig import *
+	cog.outl('G4double pressure = {}/100.; // pressure in bar'.format(conf["detector"]["pressure"]))
 	gas_composition = eval(conf["detector"]["gas_composition"])
 	cog.outl(
-		'G4double composition_density = ({})/{};'.format(
+		'G4double composition_density = ({})/{} * pressure;'.format(
 			' + '.join(['{}->GetDensity()*{}'.format(component, fraction) for component, fraction in gas_composition.items()]),
 			sum(gas_composition.values())
 		)
 	)
-	cog.outl('G4Material* gas_composition = new G4Material("GasComposition", composition_density, {}, kStateGas);'.format(len(gas_composition)))
+	cog.outl('G4Material* gas_composition = new G4Material("GasComposition", composition_density, {}, kStateGas, {}+273.15, {}*1000./Pa);'.format(len(gas_composition), conf["detector"]["temperature"], conf["detector"]["pressure"]))
 	for component, fract in gas_composition.items():
 		cog.outl('gas_composition->AddMaterial({}, {}*perCent);'.format(component, fract))
 	]]]*/
-	G4double composition_density = (ar->GetDensity()*1.0)/1.0;
-	G4Material* gas_composition = new G4Material("GasComposition", composition_density, 1, kStateGas);
-	gas_composition->AddMaterial(ar, 1.0);
+	G4double pressure = 100./100.; // pressure in bar
+	G4double composition_density = (co2->GetDensity()*7.0 + ar->GetDensity()*93.0)/100.0 * pressure;
+	G4Material* gas_composition = new G4Material("GasComposition", composition_density, 2, kStateGas, 20.+273.15, 100.*1000./Pa);
+	gas_composition->AddMaterial(co2, 7.0*perCent);
+	gas_composition->AddMaterial(ar, 93.0*perCent);
 	//[[[end]]]
 
 	mat_detector = gas_composition;

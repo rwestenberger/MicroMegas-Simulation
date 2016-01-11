@@ -32,7 +32,7 @@ void PrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent) {
 	//G4double y0 = (G4UniformRand()-.5)*10*cm;
 	G4double x0 = 0, y0 = 0;
 	//[[[cog from MMconfig import *; cog.outl("G4double z0 = {}*cm + 1*mm;".format(conf["photoconversion"]["z_kathode"])) ]]]
-	G4double z0 = 1.*cm + 1*mm;
+	G4double z0 = 3.*cm + 1*mm;
 	//[[[end]]]
 	fParticleGun->SetParticlePosition(G4ThreeVector(x0,y0,z0));
 	
