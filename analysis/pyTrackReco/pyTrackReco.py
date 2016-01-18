@@ -16,11 +16,12 @@ from scipy import interpolate
 from scipy.spatial import distance
 
 class Data:
-	def __init__(self, drift_file_path, avalanche_file_path):
+	def __init__(self, photoconversion_path, drift_file_path, avalanche_file_path):
+		self.photoconversion = root2rec(photoconversion_path, 'coatingTree')
 		self.drift = root2rec(drift_file_path, 'driftTree')
 		self.avalanche = root2rec(avalanche_file_path, 'avalancheTree')
 
-		# TODO: read in data, move primary electron data to self.primary
+		# TODO: move primary electron data to self.primary
 
 	def reconstructZvalues(self, drift_velocity=4.6698e-3):
 		'''Reconstructs z values of given dataset with the given drift_velocity.'''
@@ -116,153 +117,79 @@ class Track:
 		self.outlier_indizes = data.outlier_indizes[event]
 
 class TrackSpline(Track):
-	'''Reconstructed by B-splines.'''
-	def reconstruct_track(self):
-		data_cleaned = self.reco_data[:,self.clean_indizes]
-
-		#sort_indices = np.argsort(self.drift_data.z0, axis=0)[::-1]
-		#tck, u = interpolate.splprep([self.drift_data.x0[sort_indices], self.drift_data.y0[sort_indices], self.drift_data.z0[sort_indices]], k=3, s=1e-3)
-
-		sort_indices = np.argsort(self.avalanche_data.t1[self.clean_indizes], axis=0)[::-1]
-		self.tck, u = interpolate.splprep(data_cleaned[:,sort_indices], k=3, s=10.)
-		#self.tck, u = interpolate.splprep(data_cleaned, k=3, s=10.)
-	
-	def draw(self, fig, ax):	
-		ax.plot(*interpolate.splev(np.linspace(0,1,1000), self.tck), color='orange', lw=2, label='TrackSpline')
-
-class TrackMovingAverage(Track):
-	'''Reconstructed as moving average.'''
-	def reconstruct_track(self, n_average=40):
-		data_cleaned = self.reco_data[:,self.clean_indizes] # get cleaned data
-		data_cleaned = data_cleaned[:,np.argsort(data_cleaned[2])] # sort data by z coordinate
-
-		n_electrons = data_cleaned.shape[1]
-		self.track = []
-		for i in range(0, n_electrons - n_average):
-			positions = data_cleaned[:,i:i+n_average]
-			center = np.mean(positions, axis=1)
-			self.track.append(center)
-
-	def draw(self, fig, ax):
-		ax.plot(*np.array(self.track).transpose(), color='green', lw=2, label='TrackMovingAverage')
-
-class TrackMovingAverageSpline(Track):
-	'''Reconstructed by B-splines of moving average.'''
-	def reconstruct_track(self, n_average=30):
-		data_cleaned = self.reco_data[:,self.clean_indizes] # get cleaned data
-		data_sorted = data_cleaned[:,np.argsort(data_cleaned[2])] # sort data by z coordinate
-
-		n_electrons = data_sorted.shape[1]
-		mvg_average = []
-		for i in range(n_electrons - n_average):
-			positions = data_sorted[:,i:i+n_average]
-			center = np.mean(positions, axis=1)
-			mvg_average.append(center)
-
-		self.tck, u = interpolate.splprep(data_sorted, k=3, s=10.)
-
-	def draw(self, fig, ax):
-		ax.plot(*interpolate.splev(np.linspace(0,1,1000), self.tck), color='blue', lw=2, label='TrackMovingAverageSpline')
-
-class TrackAdaptiveMovingAverage(Track):
-	'''Reconstructed by an adaptive moving average.'''
-	def _rotation_matrix(self, direction, axis=np.array([1,0,0])):
-		'''Returns the rotation matrix needed to rotate direction onto given axis (default: x-axis).'''
-		if np.allclose(direction,axis) or np.linalg.norm(direction) == 0.: return np.identity(3)
-		direction /= np.linalg.norm(direction)
-
-		rotation_axis = np.cross(axis, direction)
-		rotation_axis /= np.linalg.norm(rotation_axis)
-		angle = np.arccos(np.dot(axis, direction)) # already norm 1
-
-		a = np.cos(angle/2.)
-		b, c, d = -rotation_axis*np.sin(angle/2.)
-
-		# Euler-Rodrigues formula
-		aa, bb, cc, dd = a*a, b*b, c*c, d*d
-		bc, ad, ac, ab, bd, cd = b*c, a*d, a*c, a*b, b*d, c*d
-		return np.array([[aa+bb-cc-dd, 2*(bc+ad), 2*(bd-ac)], [2*(bc-ad), aa+cc-bb-dd, 2*(cd+ab)], [2*(bd+ac), 2*(cd-ab), aa+dd-bb-cc]])
-
-	def _directional_argsort(self, data, offset, direction):
-		M = self._rotation_matrix(direction)
-		data_rot = np.array([np.dot(d-offset, M) for d in data]) # rotate on x-axis
-		return list(np.argsort(data_rot[:,0])) # sort for x
-
 	def _distance_argsort(self, data, start_point):
 		distances = distance.cdist(np.array([start_point]), data)
 		return list(np.argsort(distances[0]))
 
-	def reconstruct_track(self, n_average=30, smoothness=100):
+	def reconstruct_track(self, n_average=10, n_average_tangent=10):
 		'''Reconstructs track from z=min to z=max.'''
 		data_cleaned = np.array(list(self.reco_data[:,self.clean_indizes])) # get cleaned data
 		data_transp = list(data_cleaned.transpose()) # data_transp = [[x0, y0, z0], [x1, y1, z1], ...]
+		assert len(data_transp) > n_average
 
 		current_start = data_transp[np.argmax(data_cleaned[2])]
 		current_direction = current_start - data_transp[np.argmin(data_cleaned[2])] # approximate the first direction
 
-		'''
-		self.track = []
-		directions = []
-		while len(data_transp) >= n_average: # until all points are used
-			directions.append(current_direction)
-			#next_points = self._directional_argsort(data_transp, current_start, current_direction)[:n_average]
-			next_points = self._distance_argsort(data_transp, current_start)[:n_average]
-			print(next_points)
-
-			# calculate weight for all points:
-			# 1. calculate distances to last point of track
-			# 2. directional sort
-			# 3. weight directional sort with distances from 1.
-			# 4. select best fitting points
-
-			self.track.append(np.mean([data_transp[n] for n in next_points], axis=0))
-			del(data_transp[next_points[0]])
-
-			if len(self.track) >= 2:
-				current_start = self.track[-1]
-				new_direction = current_start - self.track[-2]
-				current_direction = np.average(np.array([new_direction] + directions[-smoothness:]), weights=[.5**i for i in range(len(directions[-smoothness:])+1)], axis=0)
-		'''
-
-		self.track = []
+		# sort points by pairwise distance
 		sorted_points = []
-		while len(data_transp) >= n_average:
+		while len(data_transp) > 0:
 			next_point = self._distance_argsort(data_transp, current_start)[0]
 			sorted_points.append(data_transp[next_point])
 			del(data_transp[next_point])
 
+		# moving average
+		self.track = []
 		for i in range(len(sorted_points)-n_average):
 			self.track.append(np.mean(sorted_points[i:i+n_average], axis=0))
 
+		# spline
+		assert len(self.track) > 5 # m > k for interpolation
 		self.tck, u = interpolate.splprep(np.array(self.track).transpose(), k=5, s=.1)
 
-	def draw(self, fig, ax):
-		ax.plot(*np.array(self.track).transpose(), color='green', lw=1, label='TrackAdaptiveMovingAverage')
-		spline = np.array(interpolate.splev(np.linspace(0.,1.,1000), self.tck)).transpose()
-		ax.plot(*spline.transpose(), color='orange', lw=2, label='TrackDirect')
+		# calculate tangents
+		self.tangent_firstlast = self.track[-1] - self.track[0]
+		self.tangent_firstlast /= np.linalg.norm(self.tangent_firstlast)
+
+		tr = np.array(self.track)
+		diff = tr[1:] - tr[:-1] # calculate differences
+		assert len(diff) >= n_average_tangent
+		self.tangent_mvavrg = np.average(diff[:n_average_tangent], axis=0, weights=np.array([1./2**n for n in range(n_average_tangent)]))
+		self.tangent_mvavrg /= np.linalg.norm(self.tangent_mvavrg)
 
 		tangents = np.array(interpolate.splev(np.linspace(0.,1.,1000), self.tck, der=1)).transpose()
-		ax.plot(*np.array([spline[0], spline[0]+0.1*tangents[0]]).transpose())
+		self.tangent_spline = tangents[0]
+		self.tangent_spline /= np.linalg.norm(self.tangent_spline)
+
+	def draw(self, fig, ax):
+		ax.plot(*np.array(self.track).transpose(), color='green', lw=1, label='Track Moving Average')
+
+		spline = np.array(interpolate.splev(np.linspace(0.,1.,1000), self.tck)).transpose()
+		ax.plot(*spline.transpose(), color='orange', lw=1, label='TrackSortedMovingAverageSpline')
+
+		ax.plot(*np.array([self.track[0], self.track[0]+0.1*self.tangent_mvavrg]).transpose(), color='green', lw=3, label='Tangent Moving Average')
+		ax.plot(*np.array([spline[0], spline[0]+0.1*self.tangent_spline]).transpose(), color='orange', lw=3, label='Tangent Spline')
 		#ax.plot(*interpolate.splev(np.linspace(0,1,1000), self.tck_avg), color='green', lw=2, label='TrackAverage')
+
+def angle(v1, v2):
+	'''Returns the angle in radians between vectors v1 and v2'''
+	cosang = np.dot(v1, v2)
+	sinang = np.linalg.norm(np.cross(v1, v2))
+	return np.arctan2(sinang, cosang)
 
 def main():
 	input_file_path = '/localscratch/simulation_files/MicroMegas-Simulation/outfiles/theta0_200keV_100k'
+	photoconversion_file_path = os.path.join(input_file_path, 'photoconversion.root')
 	drift_file_path = os.path.join(input_file_path, 'drift.root')
 	avalanche_file_path = os.path.join(input_file_path, 'avalanche.root')
 
-	data = Data(drift_file_path, avalanche_file_path)
+	data = Data(photoconversion_file_path, drift_file_path, avalanche_file_path)
 	data.reconstructZvalues()
 	data.calculate_clean_indizes(cut_value=4.)
 
-	event = 10 # 223 to test for scattering events
-	track_spline = TrackSpline(data, event)
-	track_spline.reconstruct_track()
-	track_mvavrg = TrackMovingAverage(data, event)
-	track_mvavrg.reconstruct_track()
-	track_mvavrg_spline = TrackMovingAverageSpline(data, event)
-	track_mvavrg_spline.reconstruct_track()
-	track_amvavrg = TrackAdaptiveMovingAverage(data, event)
-	track_amvavrg.reconstruct_track()
+	'''
+	event = 43 # 223 to test for scattering events
+	track = TrackSpline(data, event)
+	track.reconstruct_track()
 
 	# Drawing
 	fig = plt.figure()
@@ -272,13 +199,58 @@ def main():
 	ax.set_xlim([-plot_area,plot_area]); ax.set_ylim([-plot_area,plot_area]); ax.set_zlim([-plot_area+.5,plot_area+.5])
 	data.draw(event, fig, ax, plot_area)
 
-	#track_spline.draw(fig, ax)
-	#track_mvavrg.draw(fig, ax)
-	#track_mvavrg_spline.draw(fig, ax)
-	track_amvavrg.draw(fig, ax)
+	track.draw(fig, ax)
 
 	ax.legend()
 	fig.subplots_adjust(left=.02, bottom=.1, right=.98, top=.97, wspace=.27, hspace=.23)
+	plt.show()
+	'''
+
+	deviation_firstlast = []
+	deviation_mvavrg = []
+	deviation_spline = []
+
+	# event loop
+	for event in range(len(data.drift)):
+		track = TrackSpline(data, event)
+		try:
+			track.reconstruct_track(n_average=30, n_average_tangent=6)
+		except AssertionError:
+			print('Skipping event, to little data...')
+			continue
+
+		real_direction = np.array([data.photoconversion[event].Px, data.photoconversion[event].Py, data.photoconversion[event].Pz])
+		real_direction /= np.linalg.norm(real_direction)
+		deviation_firstlast.append(np.degrees(angle(real_direction, track.tangent_firstlast)))
+		deviation_mvavrg.append(np.degrees(angle(real_direction, track.tangent_mvavrg)))
+		deviation_spline.append(np.degrees(angle(real_direction, track.tangent_spline)))
+		print('Event {}: MvgAvrg: {}, Spline: {}'.format(event, deviation_mvavrg[-1], deviation_spline[-1]))
+
+	# plotting
+	fig = plt.figure()
+	ax = fig.add_subplot()
+
+	hist_firstlast = fig.add_subplot(131)
+	hist_firstlast.hist(deviation_firstlast, bins=np.arange(0, 180, 2))
+	hist_firstlast.axvline(x=np.mean(deviation_firstlast), ymin=0., ymax=1., linewidth=2, color='r')
+	hist_firstlast.set_xlim([0.,180.])
+	hist_firstlast.set_title(r'First-Last method: $\mu$={}$^\circ$'.format(round(np.mean(deviation_firstlast), 1)))
+	hist_firstlast.grid()
+
+	hist_mvavrg = fig.add_subplot(132)
+	hist_mvavrg.hist(deviation_mvavrg, bins=np.arange(0, 180, 2))
+	hist_mvavrg.axvline(x=np.mean(deviation_mvavrg), ymin=0., ymax=1., linewidth=2, color='r')
+	hist_mvavrg.set_xlim([0.,180.])
+	hist_mvavrg.set_title(r'Moving average method: $\mu$={}$^\circ$'.format(round(np.mean(deviation_mvavrg), 1)))
+	hist_mvavrg.grid()
+
+	hist_spline = fig.add_subplot(133)
+	hist_spline.hist(deviation_spline, bins=np.arange(0, 180, 2))
+	hist_spline.axvline(x=np.mean(deviation_spline), ymin=0., ymax=1., linewidth=2, color='r')
+	hist_spline.set_xlim([0.,180.])
+	hist_spline.set_title(r'Spline method: $\mu$={}$^\circ$'.format(round(np.mean(deviation_spline), 1)))
+	hist_spline.grid()
+
 	plt.show()
 
 if __name__ == '__main__':
