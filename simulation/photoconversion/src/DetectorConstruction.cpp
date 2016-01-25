@@ -144,10 +144,10 @@ G4VPhysicalVolume* DetectorConstruction::Construct() {
 		cog.outl('gas_composition->AddMaterial({}, {}*perCent);'.format(component, fract))
 	]]]*/
 	G4double pressure = 100./100.; // pressure in bar
-	G4double composition_density = (co2->GetDensity()*7.0 + ar->GetDensity()*93.0)/100.0 * pressure;
+	G4double composition_density = (ar->GetDensity()*93.0 + co2->GetDensity()*7.0)/100.0 * pressure;
 	G4Material* gas_composition = new G4Material("GasComposition", composition_density, 2, kStateGas, 20.+273.15, 100.*1000./pascal);
-	gas_composition->AddMaterial(co2, 7.0*perCent);
 	gas_composition->AddMaterial(ar, 93.0*perCent);
+	gas_composition->AddMaterial(co2, 7.0*perCent);
 	//[[[end]]]
 
 	mat_detector = gas_composition;

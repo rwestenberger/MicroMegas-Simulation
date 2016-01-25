@@ -81,7 +81,7 @@ int main(int argc, char* argv[]) {
 		cout << "Error opening file: " << argv[1] << endl;
 		return 1;
 	}
-	TTree* inputTree = (TTree*)inputFile->Get("coatingTree");
+	TTree* inputTree = (TTree*)inputFile->Get("detectorTree");
 	Int_t numberOfEvents = inputTree->GetEntriesFast();
 
 	Double_t inPosX, inPosY, inPosZ;

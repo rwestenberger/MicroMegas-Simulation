@@ -6,7 +6,7 @@
 #	cog.outl("/MM/setCoatingMaterial {}".format(conf["detector"]["coating_material"]))
 #	cog.outl("/MM/setDetectorThickness {} cm".format(conf["photoconversion"]["z_kathode"]))
 #]]]
-/MM/setKaptonThickness 100.e-4 cm
+/MM/setKaptonThickness 125.e-4 cm
 /MM/setCoatingThickness 15e-4 cm
 /MM/setCoatingMaterial G4_Au
 /MM/setDetectorThickness 3. cm
@@ -40,7 +40,7 @@
 #	z = cos(theta)
 #	cog.outl("/gun/direction {} {} {}".format(x, y, -z))
 #]]]
-/gun/energy 4. keV
+/gun/energy 5. keV
 /gun/direction 0.0 0.0 -1.0
 #[[[end]]]
 # theta = arctan(x/z), x = z*tan(theta)

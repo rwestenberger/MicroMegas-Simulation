@@ -47,7 +47,7 @@ Avalanche::Avalanche(TString path) {
 	cout << "Using \"" << path << "\" to get photoconversion/drift/avalanche.root." << endl;
 
 	TFile* photoconversionFile = new TFile(path + "/photoconversion.root");
-	photoconversionTree = (TTree*)photoconversionFile->Get("coatingTree");
+	photoconversionTree = (TTree*)photoconversionFile->Get("detectorTree");
 
 	TFile* driftFile = new TFile(path + "/drift.root");
 	driftTree = (TTree*)driftFile->Get("driftTree");

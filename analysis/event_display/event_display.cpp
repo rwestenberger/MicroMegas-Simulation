@@ -104,7 +104,7 @@ int main(int argc, char* argv[]) {
 		eventNum = atoi(argv[1]);
 		inputDirectory = argv[2];
 	} else {
-		cout << "Usage: " << argv[0] << "[EVENT_NUM] SIMULATION_PATH" << endl;
+		cout << "Usage: " << argv[0] << " [EVENT_NUM] SIMULATION_PATH" << endl;
 		return 1;
 	}
 
