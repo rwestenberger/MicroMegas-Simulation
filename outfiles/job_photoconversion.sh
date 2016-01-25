@@ -5,6 +5,11 @@ if [ "$#" -ne 1 ]; then
         exit 1
 fi
 
+if [ ! -e "$1" ]; then
+	echo "Directory $1 does not exist, creating..."
+	mkdir "$1"
+fi
+
 WD="$1"
 
 PHOTOCONVERSION_EXEC="/home/rwestenb/simulation/MicroMegas-Simulation/simulation/photoconversion/build/photoconversion"
