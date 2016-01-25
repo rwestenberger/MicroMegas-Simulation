@@ -28,4 +28,4 @@ geometry/geometry/mesh.elements: geometry/geometry.msh
 	cd geometry; ElmerGrid 14 2 geometry.msh -autoclean
 
 geometry/geometry.msh: geometry/geometry.step
-	cd geometry; gmsh geometry.step -3 -order 2 -clmax 0.02
+	cd geometry; gmsh geometry.step -3 -order 2 -clmax 0.015
