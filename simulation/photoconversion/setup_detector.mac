@@ -1,13 +1,3 @@
-# Change Micromegas setup parameters
-#[[[cog
-#	from MMconfig import *
-#	cog.outl("/MM/setCathodeThickness {} cm".format(conf["detector"]["Cathode_thickness"]))
-#	cog.outl("/MM/setDetectorThickness {} cm".format(conf["photoconversion"]["z_kathode"]))
-#]]]
-/MM/setCathodeThickness 125.e-4 cm
-/MM/setDetectorThickness 3. cm
-#[[[end]]]
-
 # Change simulation parameters
 /MM/maxStep 1 cm
 /run/setCut 2 um
@@ -36,7 +26,7 @@
 #	z = cos(theta)
 #	cog.outl("/gun/direction {} {} {}".format(x, y, -z))
 #]]]
-/gun/energy 5. keV
+/gun/energy 3. keV
 /gun/direction 0.0 0.0 -1.0
 #[[[end]]]
 # theta = arctan(x/z), x = z*tan(theta)

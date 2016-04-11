@@ -25,6 +25,21 @@ void OutputManager::Initialize() {
 		return;
 	}
 
+	fShieldTree = new TTree("shieldTree", "ShieldBlock");
+	fShieldTree->Branch("Ekin", &fEkin, "Eking/D");
+	fShieldTree->Branch("EkinVertex", &fEkinVertex, "EkinVertex/D");
+	fShieldTree->Branch("Ekin", &fEkin, "Ekin/D"); // kinetic energy
+	fShieldTree->Branch("ZVertex", &fZVertex, "ZVertex/D"); // z value of the vertex position (track creation point)
+	fShieldTree->Branch("TrackLength", &fTrackLength, "TrackLengh/D");
+	fShieldTree->Branch("PosX", &fPosX, "PosX/D"); // x position
+	fShieldTree->Branch("PosY", &fPosY, "PosY/D"); // y position
+	fShieldTree->Branch("PosZ", &fPosZ, "PosZ/D"); // z position
+	fShieldTree->Branch("Px", &fPx, "Px/D"); // x momentum
+	fShieldTree->Branch("Py", &fPy, "Py/D"); // y momentum
+	fShieldTree->Branch("Pz", &fPz, "Pz/D"); // z momentum
+	fShieldTree->Branch("t", &fT, "t/D"); // time
+
+
 	fDetectorTree = new TTree("detectorTree", "Conversion");
 	fDetectorTree->Branch("phi", &fPhi, "phi/D"); // phi angle
 	fDetectorTree->Branch("theta", &fTheta, "theta/D"); // theta angle to z axis
@@ -80,5 +95,6 @@ void OutputManager::FillEvent(TTree* tree, G4Track* track) {
 void OutputManager::PrintStatistic() {
 	G4cout << "--- Tree Stats" << G4endl;
 	if(fDetectorTree) G4cout << " N_detector = " << fDetectorTree->GetEntries() << G4endl;
+	if(fShieldTree)   G4cout << " N_shield   = " << fShieldTree->GetEntries() << G4endl;
 	G4cout << "---" << G4endl;
 }

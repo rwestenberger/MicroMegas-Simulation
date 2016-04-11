@@ -28,11 +28,17 @@ PrimaryGeneratorAction::~PrimaryGeneratorAction() {
 }
 
 void PrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent) {
-	//G4double x0 = (G4UniformRand()-.5)*10*cm;
-	//G4double y0 = (G4UniformRand()-.5)*10*cm;
 	G4double x0 = 0, y0 = 0;
-	//[[[cog from MMconfig import *; cog.outl("G4double z0 = {}*cm + 1*mm;".format(conf["photoconversion"]["z_kathode"])) ]]]
-	G4double z0 = 3.*cm + 1*mm;
+	/*[[[cog
+	from MMconfig import *
+	cog.outl("G4double z0 = {}*cm + {}*cm + {}*cm + {}*cm + 1*mm;".format(
+		conf["photoconversion"]["z_cathode"],
+		conf["detector"]["cathode_thickness"],
+		conf["detector"]["shield_thickness"],
+		conf["detector"]["shield_cover_thickness"]
+	))
+	]]]*/
+	G4double z0 = 3.*cm + 4.e-4*cm + .5*cm + 4.e-4*cm + 1*mm;
 	//[[[end]]]
 	fParticleGun->SetParticlePosition(G4ThreeVector(x0,y0,z0));
 	

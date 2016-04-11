@@ -4,8 +4,6 @@
 #include "G4VUserDetectorConstruction.hh"
 #include "globals.hh"
 
-class DetectorMessenger;
-
 class G4VPhysicalVolume;
 class G4LogicalVolume;
 class G4Material;
@@ -14,32 +12,23 @@ class G4Material;
 
 class DetectorConstruction : public G4VUserDetectorConstruction {
 	public:
-		DetectorConstruction();
-		virtual ~DetectorConstruction();
-
 		virtual G4VPhysicalVolume* Construct();
 
-		G4VPhysicalVolume* GetKathodeVolume() { return fPhysKathode; }
+		G4VPhysicalVolume* GetShieldVolume() { return fPhysShield; }
 		G4VPhysicalVolume* GetDetectorVolume() { return fPhysDetector; }
-
-		void SetCathodeThickness(G4double);
-		void SetDetectorThickness(G4double);
-		void SetDetectorMaterial(const G4String&);
 
 		void SetPairEnergy(G4double);
 
 	private:
-		DetectorMessenger* fDetectorMessenger;
-
-		G4double           fCathodeThickness;
-		G4double           fDetectorThickness;
-		G4Material*        fDetectorMaterial;
-
 		G4VPhysicalVolume* fPhysWorld;
-		G4VPhysicalVolume* fPhysKathode;
+		G4VPhysicalVolume* fPhysShieldCover;
+		G4VPhysicalVolume* fPhysShield;
+		G4VPhysicalVolume* fPhysCathode;
 		G4VPhysicalVolume* fPhysDetector;
 		G4LogicalVolume*   fLogicWorld;
-		G4LogicalVolume*   fLogicKathode;
+		G4LogicalVolume*   fLogicShieldCover;
+		G4LogicalVolume*   fLogicShield;
+		G4LogicalVolume*   fLogicCathode;
 		G4LogicalVolume*   fLogicDetector;
 };
 
