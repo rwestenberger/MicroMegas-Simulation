@@ -6,7 +6,7 @@
 #include "G4UIcmdWithADoubleAndUnit.hh"
 #include "G4UIcmdWithoutParameter.hh"
 
-DetectorMessenger::DetectorMessenger(DetectorConstruction* det) : G4UImessenger(), fDetector(det), fDetDir(0), fCaptThickCmd(0), fCoatThickCmd(0), fCoatMaterCmd(0), fDetThickCmd(0), fDetMaterCmd(0), fIonCmd(0) {
+DetectorMessenger::DetectorMessenger(DetectorConstruction* det) : G4UImessenger(), fDetector(det), fDetDir(0), fCaptThickCmd(0), fDetThickCmd(0), fDetMaterCmd(0), fIonCmd(0) {
 	fDetDir = new G4UIdirectory("/MM/");
 	fDetDir->SetGuidance("Detector control.");
 
@@ -17,20 +17,6 @@ DetectorMessenger::DetectorMessenger(DetectorConstruction* det) : G4UImessenger(
 	fCaptThickCmd->SetDefaultUnit("mm");
 	fCaptThickCmd->SetRange("thicknessKapton>0.");
 	fCaptThickCmd->AvailableForStates(G4State_PreInit, G4State_Idle);
-
-	fCoatThickCmd = new G4UIcmdWithADoubleAndUnit("/MM/setCoatingThickness", this);
-	fCoatThickCmd->SetGuidance("Set thickness of the coating.");
-	fCoatThickCmd->SetParameterName("thicknessCoating", false, false);
-	fCoatThickCmd->SetUnitCategory("Length");
-	fCoatThickCmd->SetDefaultUnit("mm");
-	fCoatThickCmd->SetRange("thicknessCoating>0.");
-	fCoatThickCmd->AvailableForStates(G4State_PreInit, G4State_Idle);
-
-	fCoatMaterCmd = new G4UIcmdWithAString("/MM/setCoatingMaterial",this);
-	fCoatMaterCmd->SetGuidance("Select material of the coating.");
-	fCoatMaterCmd->SetParameterName("materialCoating", true);
-	fCoatMaterCmd->SetDefaultValue("empty");
-	fCoatMaterCmd->AvailableForStates(G4State_PreInit, G4State_Idle);
 
 	fDetThickCmd = new G4UIcmdWithADoubleAndUnit("/MM/setDetectorThickness", this);
 	fDetThickCmd->SetGuidance("Set thickness of the detector.");
@@ -57,8 +43,6 @@ DetectorMessenger::DetectorMessenger(DetectorConstruction* det) : G4UImessenger(
 
 DetectorMessenger::~DetectorMessenger() {
 	delete fCaptThickCmd;
-	delete fCoatThickCmd;
-	delete fCoatMaterCmd;
 	delete fIonCmd;
 	delete fDetDir;
 }
@@ -66,10 +50,6 @@ DetectorMessenger::~DetectorMessenger() {
 void DetectorMessenger::SetNewValue(G4UIcommand* command, G4String newValue) {
 	if (command == fCaptThickCmd) {
 		fDetector->SetKaptonThickness(fCaptThickCmd->GetNewDoubleValue(newValue));
-	} else if (command == fCoatThickCmd) {
-		fDetector->SetCoatingThickness(fCoatThickCmd->GetNewDoubleValue(newValue));
-	} else if (command == fCoatMaterCmd) {
-		fDetector->SetCoatingMaterial(newValue);
 	} else if (command == fDetThickCmd) {
 		fDetector->SetDetectorThickness(fDetThickCmd->GetNewDoubleValue(newValue));
 	} else if (command == fDetMaterCmd) {

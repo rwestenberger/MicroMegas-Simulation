@@ -20,32 +20,11 @@ void SteppingAction::UserSteppingAction(const G4Step* step) {
 	G4VPhysicalVolume*  preVolume = step-> GetPreStepPoint()->GetTouchableHandle()->GetVolume();
 	G4VPhysicalVolume* postVolume = step->GetPostStepPoint()->GetTouchableHandle()->GetVolume();
 
-	G4VPhysicalVolume*  coatingVolume = fDetector-> GetCoatingVolume();
 	G4VPhysicalVolume* detectorVolume = fDetector->GetDetectorVolume();
 
 	G4Track* track = step->GetTrack();
 	const G4ParticleDefinition* particle = track->GetParticleDefinition();
 	Run* run = static_cast<Run*>(G4RunManager::GetRunManager()->GetNonConstCurrentRun());
-
-	// coating conversion
-	if (preVolume == coatingVolume && postVolume == detectorVolume) {
-		if (track->GetParentID() == 1) { // only secondaries
-			if (particle->GetParticleType() == "lepton") { // only electrons
-				fOutputManager->FillEvent(fOutputManager->GetCoatingTree(), track);
-				track->SetTrackStatus(fStopAndKill); // kill track
-				run->CountProcesses("coating_trans", track->GetCreatorProcess());
-			}
-		}
-	}
-
-	// coating conversion process statistics
-	if (preVolume == coatingVolume) {
-		if (track->GetCurrentStepNumber() == 1) {
-			if (track->GetParentID() != 0 && particle->GetParticleType() == "lepton") {
-				run->CountProcesses("coating", track->GetCreatorProcess());
-			}
-		}
-	}
 
 	// gas conversion
 	if (preVolume == detectorVolume) {

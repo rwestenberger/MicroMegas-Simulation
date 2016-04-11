@@ -18,7 +18,6 @@ DetectorConstruction::DetectorConstruction() : G4VUserDetectorConstruction(), fD
 	fDetectorMessenger = new DetectorMessenger(this);
 
 	  fKaptonThickness = .2*mm; // can be overwritten by /MM/setKaptonThickness
-	 fCoatingThickness = .1*mm; // can be overwritten by /MM/setCoatingThickness
 	fDetectorThickness = 2.*mm; // can be overwritten by /MM/setDetectorThickness
 }
 
@@ -31,11 +30,6 @@ G4VPhysicalVolume* DetectorConstruction::Construct() {
 
 	G4bool checkOverlaps = true;
 
-	//[[[cog from MMconfig import *; cog.outl("G4bool use_coating = {};".format(conf["detector"]["use_coating"].lower())) ]]]
-	G4bool use_coating = false;
-	//[[[end]]]
-	if (!use_coating) fCoatingThickness = 0.*um;
-
 	//[[[cog from MMconfig import *; cog.outl("G4double z_kathode = {}*cm;".format(conf["photoconversion"]["z_kathode"])) ]]]
 	G4double z_kathode = 3.*cm;
 	//[[[end]]]
@@ -44,7 +38,7 @@ G4VPhysicalVolume* DetectorConstruction::Construct() {
 	//[[[cog from MMconfig import *; cog.outl("G4double sizeX_world = {}*cm, sizeY_world = {}*cm;".format(conf["detector"]["size_x"], conf["detector"]["size_y"])) ]]]
 	G4double sizeX_world = 10.*cm, sizeY_world = 10.*cm;
 	//[[[end]]]
-	G4double sizeZ_world  = 2.*(fKaptonThickness + fCoatingThickness + z_kathode + 1*cm); // 1cm space above the detector
+	G4double sizeZ_world  = 2.*(fKaptonThickness + z_kathode + 1*cm); // 1cm space above the detector
 	G4Material* mat_air = nist->FindOrBuildMaterial("G4_AIR");
 	G4Material* mat_vacuum = new G4Material("Vacuum", 1.e-5*g/cm3, 1, kStateGas, STP_Temperature, 2.e-2*bar);
 	mat_vacuum->AddMaterial(mat_air, 1.);
@@ -55,8 +49,7 @@ G4VPhysicalVolume* DetectorConstruction::Construct() {
 	
 	// volume positions
 	G4ThreeVector pos_detector = G4ThreeVector(0, 0, -.5*fDetectorThickness + z_kathode);
-	G4ThreeVector pos_coating = G4ThreeVector(0, 0, .5*fCoatingThickness + z_kathode);
-	G4ThreeVector pos_kathode = G4ThreeVector(0, 0, fCoatingThickness+.5*fKaptonThickness + z_kathode);
+	G4ThreeVector pos_kathode = G4ThreeVector(0, 0, .5*fKaptonThickness + z_kathode);
 
 	// Kathode
 	G4double sizeX_kathode = sizeX_world, sizeY_kathode = sizeY_world;
@@ -68,21 +61,6 @@ G4VPhysicalVolume* DetectorConstruction::Construct() {
 	//visatt_kathode->SetForceWireframe(true);
 	fLogicKathode->SetVisAttributes(visatt_kathode);
 	fPhysKathode = new G4PVPlacement(0, pos_kathode, fLogicKathode, "Kathode", fLogicWorld, false, 0, checkOverlaps);
-
-	// Coating
-	if (use_coating) {
-		G4double sizeX_coating = sizeX_kathode, sizeY_coating = sizeY_kathode;
-		G4Material* mat_coating;
-		if (fCoatingMaterial) mat_coating = fCoatingMaterial;
-		else mat_coating = nist->FindOrBuildMaterial("G4_Au");
-
-		G4Box* solid_coating = new G4Box("Coating", .5*sizeX_coating, .5*sizeY_coating, .5*fCoatingThickness);
-		fLogicCoating = new G4LogicalVolume(solid_coating, mat_coating, "Coating");
-		G4VisAttributes* visatt_coating = new G4VisAttributes(G4Colour(1., 1., 0., .5));
-		//visatt_coating->SetForceWireframe(true);
-		fLogicCoating->SetVisAttributes(visatt_coating);
-		fPhysCoating = new G4PVPlacement(0, pos_coating, fLogicCoating, "Coating", fLogicWorld, false, 0, checkOverlaps);
-	}
 
 	// Detector
 	G4double sizeX_detector = sizeX_world, sizeY_detector = sizeY_world;
@@ -173,34 +151,11 @@ void DetectorConstruction::SetKaptonThickness(G4double val) {
 	}
 }
 
-void DetectorConstruction::SetCoatingThickness(G4double val) {
-	if (fPhysWorld) {
-		G4Exception ("DetectorConstruction::SetCoatingThickness()", "MM", JustWarning, "Attempt to change already constructed geometry is ignored");
-	} else {
-		fCoatingThickness = val;
-	}
-}
-
 void DetectorConstruction::SetDetectorThickness(G4double val) {
 	if (fPhysWorld) {
 		G4Exception ("DetectorConstruction::SetDetectorThickness()", "MM", JustWarning, "Attempt to change already constructed geometry is ignored");
 	} else {
 		fDetectorThickness = val;
-	}
-}
-
-void DetectorConstruction::SetCoatingMaterial(const G4String& name) {
-	G4Material* mat = G4Material::GetMaterial(name, false);
-
-	if(!mat) mat = G4NistManager::Instance()->FindOrBuildMaterial(name);
-
-	if (mat) {
-		G4cout << "### New coating material: " << mat->GetName() << G4endl;
-		fCoatingMaterial = mat;
-		if (fLogicCoating) {
-	    	fLogicCoating->SetMaterial(mat); 
-	    	G4RunManager::GetRunManager()->PhysicsHasBeenModified();
-    	}
 	}
 }
 
@@ -220,5 +175,5 @@ void DetectorConstruction::SetDetectorMaterial(const G4String& name) {
 }
 
 void DetectorConstruction::SetPairEnergy(G4double val) {
-  if(val > 0.0) fCoatingMaterial->GetIonisation()->SetMeanEnergyPerIonPair(val);
+  //if(val > 0.0) fCoatingMaterial->GetIonisation()->SetMeanEnergyPerIonPair(val);
 }

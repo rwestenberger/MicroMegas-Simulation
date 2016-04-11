@@ -25,24 +25,6 @@ void OutputManager::Initialize() {
 		return;
 	}
 
-	fCoatingTree = new TTree("coatingTree", "Conversion");
-	fCoatingTree->Branch("phiVertex", &fPhiVertex, "phiVertex/D"); // phi angle at production
-	fCoatingTree->Branch("phi", &fPhi, "phi/D"); // phi angle
-	fCoatingTree->Branch("thetaVertex", &fThetaVertex, "thetaVertex/D"); // theta angle to z axis as production
-	fCoatingTree->Branch("theta", &fTheta, "theta/D"); // theta angle to z axis
-	fCoatingTree->Branch("EkinVertex", &fEkinVertex, "EkinVertex/D"); // kinetic energy at production
-	fCoatingTree->Branch("Ekin", &fEkin, "Ekin/D"); // kinetic energy
-	fCoatingTree->Branch("t", &fT, "t/D"); // time at leaving the kathode
-	fCoatingTree->Branch("PosX", &fPosX, "PosX/D"); // x position
-	fCoatingTree->Branch("PosY", &fPosY, "PosY/D"); // y position
-	fCoatingTree->Branch("PosZ", &fPosZ, "PosZ/D"); // z position
-	fCoatingTree->Branch("Eloss", &fEloss, "Eloss/D"); // loss of kinetic energy since production
-	fCoatingTree->Branch("ZVertex", &fZVertex, "ZVertex/D"); // z value of the vertex position (track creation point)
-	fCoatingTree->Branch("TrackLength", &fTrackLength, "TrackLengh/D"); // track length
-	fCoatingTree->Branch("Px", &fPx, "Px/D"); // x momentum
-	fCoatingTree->Branch("Py", &fPy, "Py/D"); // y momentum
-	fCoatingTree->Branch("Pz", &fPz, "Pz/D"); // z momentum
-
 	fDetectorTree = new TTree("detectorTree", "Conversion");
 	fDetectorTree->Branch("phi", &fPhi, "phi/D"); // phi angle
 	fDetectorTree->Branch("theta", &fTheta, "theta/D"); // theta angle to z axis
@@ -97,7 +79,6 @@ void OutputManager::FillEvent(TTree* tree, G4Track* track) {
 
 void OutputManager::PrintStatistic() {
 	G4cout << "--- Tree Stats" << G4endl;
-	if(fCoatingTree) G4cout << " N_coating = " << fCoatingTree->GetEntries() << G4endl;
 	if(fDetectorTree) G4cout << " N_detector = " << fDetectorTree->GetEntries() << G4endl;
 	G4cout << "---" << G4endl;
 }

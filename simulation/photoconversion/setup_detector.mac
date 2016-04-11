@@ -2,13 +2,9 @@
 #[[[cog
 #	from MMconfig import *
 #	cog.outl("/MM/setKaptonThickness {} cm".format(conf["detector"]["kapton_thickness"]))
-#	cog.outl("/MM/setCoatingThickness {} cm".format(conf["detector"]["coating_thickness"]))
-#	cog.outl("/MM/setCoatingMaterial {}".format(conf["detector"]["coating_material"]))
 #	cog.outl("/MM/setDetectorThickness {} cm".format(conf["photoconversion"]["z_kathode"]))
 #]]]
 /MM/setKaptonThickness 125.e-4 cm
-/MM/setCoatingThickness 15e-4 cm
-/MM/setCoatingMaterial G4_Au
 /MM/setDetectorThickness 3. cm
 #[[[end]]]
 
