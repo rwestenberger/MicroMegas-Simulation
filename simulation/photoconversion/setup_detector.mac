@@ -1,10 +1,10 @@
 # Change Micromegas setup parameters
 #[[[cog
 #	from MMconfig import *
-#	cog.outl("/MM/setKaptonThickness {} cm".format(conf["detector"]["kapton_thickness"]))
+#	cog.outl("/MM/setCathodeThickness {} cm".format(conf["detector"]["Cathode_thickness"]))
 #	cog.outl("/MM/setDetectorThickness {} cm".format(conf["photoconversion"]["z_kathode"]))
 #]]]
-/MM/setKaptonThickness 125.e-4 cm
+/MM/setCathodeThickness 125.e-4 cm
 /MM/setDetectorThickness 3. cm
 #[[[end]]]
 

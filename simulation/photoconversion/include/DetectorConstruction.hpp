@@ -22,7 +22,7 @@ class DetectorConstruction : public G4VUserDetectorConstruction {
 		G4VPhysicalVolume* GetKathodeVolume() { return fPhysKathode; }
 		G4VPhysicalVolume* GetDetectorVolume() { return fPhysDetector; }
 
-		void SetKaptonThickness(G4double);
+		void SetCathodeThickness(G4double);
 		void SetDetectorThickness(G4double);
 		void SetDetectorMaterial(const G4String&);
 
@@ -31,7 +31,7 @@ class DetectorConstruction : public G4VUserDetectorConstruction {
 	private:
 		DetectorMessenger* fDetectorMessenger;
 
-		G4double           fKaptonThickness;
+		G4double           fCathodeThickness;
 		G4double           fDetectorThickness;
 		G4Material*        fDetectorMaterial;
 

@@ -10,12 +10,12 @@ DetectorMessenger::DetectorMessenger(DetectorConstruction* det) : G4UImessenger(
 	fDetDir = new G4UIdirectory("/MM/");
 	fDetDir->SetGuidance("Detector control.");
 
-	fCaptThickCmd = new G4UIcmdWithADoubleAndUnit("/MM/setKaptonThickness", this);
-	fCaptThickCmd->SetGuidance("Set thickness of the kapton.");
-	fCaptThickCmd->SetParameterName("thicknessKapton", false, false);
+	fCaptThickCmd = new G4UIcmdWithADoubleAndUnit("/MM/setCathodeThickness", this);
+	fCaptThickCmd->SetGuidance("Set thickness of the Cathode.");
+	fCaptThickCmd->SetParameterName("thicknessCathode", false, false);
 	fCaptThickCmd->SetUnitCategory("Length");
 	fCaptThickCmd->SetDefaultUnit("mm");
-	fCaptThickCmd->SetRange("thicknessKapton>0.");
+	fCaptThickCmd->SetRange("thicknessCathode>0.");
 	fCaptThickCmd->AvailableForStates(G4State_PreInit, G4State_Idle);
 
 	fDetThickCmd = new G4UIcmdWithADoubleAndUnit("/MM/setDetectorThickness", this);
@@ -49,7 +49,7 @@ DetectorMessenger::~DetectorMessenger() {
 
 void DetectorMessenger::SetNewValue(G4UIcommand* command, G4String newValue) {
 	if (command == fCaptThickCmd) {
-		fDetector->SetKaptonThickness(fCaptThickCmd->GetNewDoubleValue(newValue));
+		fDetector->SetCathodeThickness(fCaptThickCmd->GetNewDoubleValue(newValue));
 	} else if (command == fDetThickCmd) {
 		fDetector->SetDetectorThickness(fDetThickCmd->GetNewDoubleValue(newValue));
 	} else if (command == fDetMaterCmd) {

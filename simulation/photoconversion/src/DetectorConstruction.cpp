@@ -17,7 +17,7 @@
 DetectorConstruction::DetectorConstruction() : G4VUserDetectorConstruction(), fDetectorMessenger(0) {
 	fDetectorMessenger = new DetectorMessenger(this);
 
-	  fKaptonThickness = .2*mm; // can be overwritten by /MM/setKaptonThickness
+	 fCathodeThickness = .2*mm; // can be overwritten by /MM/setCathodeThickness
 	fDetectorThickness = 2.*mm; // can be overwritten by /MM/setDetectorThickness
 }
 
@@ -38,7 +38,7 @@ G4VPhysicalVolume* DetectorConstruction::Construct() {
 	//[[[cog from MMconfig import *; cog.outl("G4double sizeX_world = {}*cm, sizeY_world = {}*cm;".format(conf["detector"]["size_x"], conf["detector"]["size_y"])) ]]]
 	G4double sizeX_world = 10.*cm, sizeY_world = 10.*cm;
 	//[[[end]]]
-	G4double sizeZ_world  = 2.*(fKaptonThickness + z_kathode + 1*cm); // 1cm space above the detector
+	G4double sizeZ_world  = 2.*(fCathodeThickness + z_kathode + 1*cm); // 1cm space above the detector
 	G4Material* mat_air = nist->FindOrBuildMaterial("G4_AIR");
 	G4Material* mat_vacuum = new G4Material("Vacuum", 1.e-5*g/cm3, 1, kStateGas, STP_Temperature, 2.e-2*bar);
 	mat_vacuum->AddMaterial(mat_air, 1.);
@@ -49,14 +49,14 @@ G4VPhysicalVolume* DetectorConstruction::Construct() {
 	
 	// volume positions
 	G4ThreeVector pos_detector = G4ThreeVector(0, 0, -.5*fDetectorThickness + z_kathode);
-	G4ThreeVector pos_kathode = G4ThreeVector(0, 0, .5*fKaptonThickness + z_kathode);
+	G4ThreeVector pos_kathode = G4ThreeVector(0, 0, .5*fCathodeThickness + z_kathode);
 
 	// Kathode
 	G4double sizeX_kathode = sizeX_world, sizeY_kathode = sizeY_world;
-	G4Material* mat_kapton = nist->FindOrBuildMaterial("G4_KAPTON");
+	G4Material* mat_Cathode = nist->FindOrBuildMaterial("G4_Cathode");
 
-	G4Box* solid_kathode = new G4Box("Kathode", .5*sizeX_kathode, .5*sizeY_kathode, .5*fKaptonThickness);
-	fLogicKathode = new G4LogicalVolume(solid_kathode, mat_kapton, "Kathode");
+	G4Box* solid_kathode = new G4Box("Kathode", .5*sizeX_kathode, .5*sizeY_kathode, .5*fCathodeThickness);
+	fLogicKathode = new G4LogicalVolume(solid_kathode, mat_Cathode, "Kathode");
 	G4VisAttributes* visatt_kathode = new G4VisAttributes(G4Colour(1., .64, .08, .5));
 	//visatt_kathode->SetForceWireframe(true);
 	fLogicKathode->SetVisAttributes(visatt_kathode);
@@ -143,11 +143,11 @@ G4VPhysicalVolume* DetectorConstruction::Construct() {
 	return fPhysWorld;
 }
 
-void DetectorConstruction::SetKaptonThickness(G4double val) {
+void DetectorConstruction::SetCathodeThickness(G4double val) {
 	if (fPhysWorld) {
-		G4Exception ("DetectorConstruction::SetKaptonThickness()", "MM", JustWarning, "Attempt to change already constructed geometry is ignored");
+		G4Exception ("DetectorConstruction::SetCathodeThickness()", "MM", JustWarning, "Attempt to change already constructed geometry is ignored");
 	} else {
-		fKaptonThickness = val;
+		fCathodeThickness = val;
 	}
 }
 
