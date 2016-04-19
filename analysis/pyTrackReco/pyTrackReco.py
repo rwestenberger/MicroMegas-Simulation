@@ -23,9 +23,9 @@ class Data:
 
 		# TODO: move primary electron data to self.primary
 
-	def reconstructZvalues(self, drift_velocity=4.6698e-3):
+	def reconstructZvalues(self, drift_velocity=4.627e-3):
 		'''Reconstructs z values of given dataset with the given drift_velocity.'''
-		# unit drift_velocity: cm/ns
+		# unit drift_velocity: cm/ns, obtained from fit of (z1-z0)/(t1-t0)
 
 		start_times = np.array([min(times) if len(times)>0 else 0. for times in self.avalanche.t1])
 		z_reco = drift_velocity * (self.avalanche.t1 - start_times)
