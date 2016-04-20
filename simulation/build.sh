@@ -1,7 +1,9 @@
 #!/bin/bash
 
-project_path="$(pwd)"
+project_path=$(dirname $0)
+project_path=$(realpath $project_path)
 export PYTHONPATH="${PYTHONPATH}:$project_path"
+echo $PYTHONPATH
 
 echo "Building photoconversion..."
 cd "$project_path/photoconversion"
