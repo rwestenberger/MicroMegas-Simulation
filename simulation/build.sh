@@ -1,7 +1,7 @@
 #!/bin/bash
 
 project_path=$(dirname $0)
-project_path=$(realpath $project_path)
+project_path=$(readlink -e $project_path)
 export PYTHONPATH="${PYTHONPATH}:$project_path"
 echo $PYTHONPATH
 
