@@ -80,144 +80,90 @@ __version__ = "1.0"
 # Unpublished-- rights reserved under the copyright laws of the
 # United States.  Contractor/manufacturer is Silicon Graphics,
 # Inc., 2011 N.  Shoreline Blvd., Mountain View, CA 94039-7311.
-								
-import math
-import copy
+
+import numpy as np
 from pyglet.gl import *
 
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# for norming screen coordinates
 def norm1(x,maxx):
     """given x within [0,maxx], scale to a range [-1,1]."""
-    return (2. * x - float(maxx)) / float(maxx)
+    return (2*x - maxx)/maxx
 
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# a little vector library that is misused in odd ways below.
-def v3add(src1, src2):
-	return [ src1[0] + src2[0],
-			 src1[1] + src2[1],
-			 src1[2] + src2[2] ]
-
-def v3sub(src1, src2):
-	return [ src1[0] - src2[0],
-			 src1[1] - src2[1],
-			 src1[2] - src2[2] ]
-
-def v3scale(v, scale):
-	return [ v[0] * scale,
-			 v[1] * scale,
-			 v[2] * scale ]
-
-def v3dot(v1, v2):
-	return v1[0]*v2[0] + v1[1]*v2[1] + v1[2]*v2[2]
-
-def v3cross(v1, v2):
-	return [ (v1[1] * v2[2]) - (v1[2] * v2[1]),
-			 (v1[2] * v2[0]) - (v1[0] * v2[2]),
-			 (v1[0] * v2[1]) - (v1[1] * v2[0]) ]
-
-def v3length(v):
-	return math.sqrt(v[0] * v[0] + v[1] * v[1] + v[2] * v[2])
-
-def v3normalize(v):
-	try:
-		tmp = v3scale(v,1.0/v3length(v))
-		return tmp
-	except ZeroDivisionError:
-		return v
-
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# Some quaternion routines
 def q_add(q1, q2):
 	"""Given two quaternions, add them together to get a third quaternion.
 	Adding quaternions to get a compound rotation is analagous to adding
 	translations to get a compound translation.  When incrementally
 	adding rotations, the first argument here should be the new rotation.
 	"""
-	t1 = v3scale(q1,q2[3])
-	t2 = v3scale(q2,q1[3])
-	t3 = v3cross(q2,q1)
-	tf = v3add(t1,t2)
-	tf = v3add(t3,tf)
-	tf.append( q1[3] * q2[3] - v3dot(q1,q2) )
-	return tf
+	t1 = q1*q2[3]
+	t2 = q2*q1[3]
+	t3 = np.cross(q2[:3],q1[:3])
+	tf = t1[:3]+t2[:3]
+	tf = t3+tf
+	return np.append(tf, q1[3]*q2[3] - np.dot(q1[:3],q2[:3]))
 
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 def q_from_axis_angle(a, phi):
 	# a is a 3-vector, q is a 4-vector
 	"""Computes a quaternion based on an axis (defined by the given vector)
 	and an angle about which to rotate.  The angle is expressed in radians.
 	"""
-	q = v3normalize(a)
-	q = v3scale(q, math.sin(phi/2.0))
-	q.append(math.cos(phi/2.0))
-	return q
+	return np.append(a/np.linalg.norm(a) * np.sin(phi/2), np.cos(phi/2))
 
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 def q_normalize(q):
 	"""Return a normalized quaternion"""
-	mag = (q[0]*q[0] + q[1]*q[1] + q[2]*q[2] + q[3]*q[3])
-	if mag != 0:
-		for i in range(4): 
-			q[i] /= mag;
+	mag = np.dot(q,q)
+	if mag != 0: q /= mag;
 	return q
 
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 def q_matrix(q):
 	"""return the rotation matrix based on q"""
 	m = [0.0]*16
-	m[0*4+0] = 1.0 - 2.0 * (q[1] * q[1] + q[2] * q[2])
-	m[0*4+1] = 2.0 * (q[0] * q[1] - q[2] * q[3])
-	m[0*4+2] = 2.0 * (q[2] * q[0] + q[1] * q[3])
-	m[0*4+3] = 0.0
+	m[0*4+0] = 1 - 2 * (q[1] * q[1] + q[2] * q[2])
+	m[0*4+1] = 2 * (q[0] * q[1] - q[2] * q[3])
+	m[0*4+2] = 2 * (q[2] * q[0] + q[1] * q[3])
+	m[0*4+3] = 0
 
-	m[1*4+0] = 2.0 * (q[0] * q[1] + q[2] * q[3])
-	m[1*4+1] = 1.0 - 2.0 * (q[2] * q[2] + q[0] * q[0])
-	m[1*4+2] = 2.0 * (q[1] * q[2] - q[0] * q[3])
-	m[1*4+3] = 0.0
+	m[1*4+0] = 2 * (q[0] * q[1] + q[2] * q[3])
+	m[1*4+1] = 1 - 2 * (q[2] * q[2] + q[0] * q[0])
+	m[1*4+2] = 2 * (q[1] * q[2] - q[0] * q[3])
+	m[1*4+3] = 0
 
-	m[2*4+0] = 2.0 * (q[2] * q[0] - q[1] * q[3])
-	m[2*4+1] = 2.0 * (q[1] * q[2] + q[0] * q[3])
-	m[2*4+2] = 1.0 - 2.0 * (q[1] * q[1] + q[0] * q[0])
-	m[2*4+3] = 0.0
+	m[2*4+0] = 2 * (q[2] * q[0] - q[1] * q[3])
+	m[2*4+1] = 2 * (q[1] * q[2] + q[0] * q[3])
+	m[2*4+2] = 1 - 2 * (q[1] * q[1] + q[0] * q[0])
+	m[2*4+3] = 0
 
-	m[3*4+0] = 0.0
-	m[3*4+1] = 0.0
-	m[3*4+2] = 0.0
-	m[3*4+3] = 1.0
+	m[3*4+0] = 0
+	m[3*4+1] = 0
+	m[3*4+2] = 0
+	m[3*4+3] = 1
 	return m
 
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 def project_z(r, x, y):
 	"""Project an x,y pair onto a sphere of radius r OR a hyperbolic sheet
 	if we are away from the center of the sphere.
 	"""
-	d = math.sqrt(x*x + y*y)
+	d = np.sqrt(x*x + y*y)
 	if (d < r * 0.70710678118654752440):    # Inside sphere
-		z = math.sqrt(r*r - d*d)
+		z = np.sqrt(r*r - d*d)
 	else:                                   # On hyperbola
 		t = r / 1.41421356237309504880
 		z = t*t / d
 	return z
 
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#
-# Trackball Camera Class
-#
+
 class TrackballCamera:
-	# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	def __init__(self, radius=1.0):
 		""" initialize the camera, giving a radius from the focal point for
 		the camera eye.  Update focal point & up via the update_modelview call.
 		"""
 		# the quaternion storing the rotation
-		self.rot_quat = [0.53, 0.12, 0.22, 0.81]
+		self.rot_quat = np.array([0.,0.,0.,1.])
 		# the last mouse update
 		self.last_x, self.last_y = None, None
 		# camera vars
-		self.cam_eye   = [0.,0.,radius]
-		self.cam_focus = [0.,0.,0.]
-		self.cam_up    = [0.,1.,0.]
+		self.cam_eye   = np.array([0.,0.,radius])
+		self.cam_focus = np.array([0.,0.,0.])
+		self.cam_up    = np.array([0.,1.,0.])
 		# in add_quat routine, renormalize "sometimes"
 		self.RENORMCOUNT = 100
 		self.count = 0
@@ -228,7 +174,6 @@ class TrackballCamera:
 		# Programmer.
 		self.TRACKBALLSIZE = 0.8
 
-	# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	def mouse_roll(self, norm_mouse_x, norm_mouse_y, dragging=True):
 		"""When you click or drag the primary mouse button, scale the mouse
 		x & y to the range [-1.0,1.0] and call this routine to roll the trackball
@@ -246,7 +191,6 @@ class TrackballCamera:
 			self.update_modelview()
 		self.last_x, self.last_y = norm_mouse_x, norm_mouse_y
 
-	# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	def mouse_zoom(self, norm_mouse_x, norm_mouse_y, dragging=True):
 		"""When you click or drag a secondary mouse button, scale the mouse
 		x & y to the range [-1.0,1.0] and call this routine to change the
@@ -257,28 +201,41 @@ class TrackballCamera:
 		if self.last_x:
 			dx = norm_mouse_x - self.last_x
 			dy = norm_mouse_y - self.last_y
-			norm_mouse_r_delta = 20.0*math.sqrt(dx*dx+dy*dy)
-			if dy > 0.0:
+			norm_mouse_r_delta = 20*np.sqrt(dx*dx+dy*dy)
+			if dy > 0:
 				norm_mouse_r_delta = -norm_mouse_r_delta
 			if dragging:
-				self.cam_eye[2] = self.cam_eye[2] + norm_mouse_r_delta
-				if self.cam_eye[2] < 1.0:
-					self.cam_eye[2] == 1.0
+				self.cam_eye[2] += norm_mouse_r_delta
+				if self.cam_eye[2] < 0.1:
+					self.cam_eye[2] = 0.1
 				self.update_modelview()
 		self.last_x, self.last_y = norm_mouse_x, norm_mouse_y
 
-	# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	def mouse_zoom_wheel(self, dz):
+		self.cam_eye[2] -= dz
+		if self.cam_eye[2] < .1: self.cam_eye[2] = .1
+		self.update_modelview()
+
+	def mouse_move(self, norm_mouse_x, norm_mouse_y, dragging=True):
+		"""When you click or drag the mouse button, move the camera."""
+		if dragging:
+			dx = self.last_x - norm_mouse_x
+			dy = self.last_y - norm_mouse_y
+			forward = self.cam_focus-self.cam_eye
+			right = np.cross(forward, self.cam_up)
+			self.cam_eye += dx*right + dy*self.cam_up
+			self.cam_focus += dx*right + dy*self.cam_up
+			self.update_modelview()
+		self.last_x, self.last_y = norm_mouse_x, norm_mouse_y
+
 	def update_modelview(self,cam_radius=None,cam_focus=None,cam_up=None):
 		"""Given a radius for the trackball camera, a focus-point 3-vector,
 		another 3-vector the points 'up' combined with the current
 		orientation of the trackball, update the GL_MODELVIEW matrix.
 		"""
-		if cam_radius:
-			self.cam_eye[2] = cam_radius
-		if cam_focus:
-			self.cam_focus = cam_focus
-		if cam_up:
-			self.cam_up = cam_up
+		if cam_radius: self.cam_eye[2] = cam_radius
+		if cam_focus: self.cam_focus = cam_focus
+		if cam_up: self.cam_up = cam_up
 		glMatrixMode(GL_MODELVIEW)
 		glLoadIdentity()
 		gluLookAt(
@@ -290,13 +247,11 @@ class TrackballCamera:
 		m = self._matrix()
 		mm = (GLfloat * len(m))(*m)  # FIXME there is prob a better way...
 		glMultMatrixf(mm)
-		
-	# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 	def _matrix(self):
 		"""return the rotation matrix for the trackball"""
 		return q_matrix(self.rot_quat)
 
-	# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	def _rotate(self, norm_mouse_x, norm_mouse_y): 
 		"""Pass the x and y coordinates of the last and current positions of
 		the mouse, scaled so they are in the range [-1.0,1.0].
@@ -312,23 +267,21 @@ class TrackballCamera:
 		# handle special case
 		if (self.last_x == norm_mouse_x and self.last_y == norm_mouse_y):
 			# Zero rotation 
-			return [ 0.0, 0.0, 0.0, 1.0]
+			return np.array([0., 0., 0., 1.])
 
-		# First, figure out z-coordinates for projection of P1 and P2 to
-		# deformed sphere
-		last = [self.last_x, self.last_y, project_z(self.TRACKBALLSIZE,self.last_x,self.last_y)]
-		new  = [norm_mouse_x, norm_mouse_y, project_z(self.TRACKBALLSIZE,norm_mouse_x,norm_mouse_y)]
+		# First, figure out z-coordinates for projection of P1 and P2 to deformed sphere
+		last = np.array([self.last_x, self.last_y, project_z(self.TRACKBALLSIZE,self.last_x,self.last_y)])
+		new  = np.array([norm_mouse_x, norm_mouse_y, project_z(self.TRACKBALLSIZE,norm_mouse_x,norm_mouse_y)])
 
-		# Now, we want the cross product of LAST and NEW
-		# aka the axis of rotation
-		a = v3cross(new,last)
+		# Now, we want the cross product of LAST and NEW aka the axis of rotation
+		a = np.cross(new,last)
 		
 		# Figure out how much to rotate around that axis (phi)
-		d = v3sub(last,new)
-		t = v3length(d) / (2.0*self.TRACKBALLSIZE)
+		d = last-new
+		t = np.linalg.norm(d) / (2.0*self.TRACKBALLSIZE)
 		# Avoid problems with out-of-control values...
-		if (t > 1.0): t = 1.0
-		if (t < -1.0): t = -1.0
-		phi = 2.0 * math.asin(t)
+		if (t > 1): t = 1
+		if (t < -1): t = -1
+		phi = 2*np.arcsin(t)
 
 		return q_from_axis_angle(a,phi)
