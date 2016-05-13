@@ -6,8 +6,10 @@ from pyglet.gl import *
 
 import numpy as np
 
+from progressbar import ProgressBar, SimpleProgress, Percentage, Bar
+
 from utils.trackball_camera import TrackballCamera, norm1
-from utils.data_io import read_data
+from utils import data_io
 from utils.solarized import colors
 
 class Hud():
@@ -36,21 +38,22 @@ class World():
 		self.init_vertex_lists(input_file_path)
 
 	def init_vertex_lists(self, input_file_path):
-		event_data = read_data(input_file_path, 'driftLineTree', event=1)
+		event_data = data_io.read_data(input_file_path, 'driftLineTree', event=1)
 
 		self.vertex_lists = []
 		self.start_points = []
 		self.end_points = []
 		num_drift_lines = len(event_data['x_e'])
+		pbar = ProgressBar(widgets=[SimpleProgress(sep='/'), ' ', Percentage(), ' ', Bar(marker='█', left='|', right='|')], maxval=num_drift_lines).start()
 		for drift_line in range(num_drift_lines):
-			print('Loading drift line {}/{}'.format(drift_line+1, num_drift_lines))
+			pbar.update(drift_line)
 			number_of_vertices = len(event_data['x_e'][drift_line])
 			vertex_list = pyglet.graphics.vertex_list(number_of_vertices, 'v3f/static')
 			vertex_list.vertices = np.hstack(np.array([event_data['x_e'][drift_line], event_data['y_e'][drift_line], event_data['z_e'][drift_line]]).T)
 			self.vertex_lists.append(vertex_list)
 			self.start_points.append([event_data['x_e'][drift_line][0], event_data['y_e'][drift_line][0], event_data['z_e'][drift_line][0]])
 			self.end_points.append([event_data['x_e'][drift_line][-1], event_data['y_e'][drift_line][-1], event_data['z_e'][drift_line][-1]])
-			print('Loaded {} drift points.'.format(number_of_vertices))
+		pbar.finish()
 
 	def init_coordinate_system(self, num_list):
 		marker_len = .02
@@ -125,6 +128,7 @@ class View():
 		self.world = world
 		self.hud = hud
 		self.camera = TrackballCamera(radius=4.)
+		self.fov = 60.
 
 	def update(self, width, height):
 		self.width, self.height = width, height
@@ -136,7 +140,7 @@ class View():
 		glMatrixMode(GL_PROJECTION)
 		glLoadIdentity()
 		aspect_ratio = self.width/self.height
-		gluPerspective(60., aspect_ratio, 0.01, 100)
+		gluPerspective(self.fov, aspect_ratio, 0.01, 100)
 
 	def hud_projection(self):
 		glMatrixMode(GL_PROJECTION)
@@ -193,7 +197,8 @@ class Window(pyglet.window.Window):
 			self.view.camera.mouse_zoom(norm_x, norm_y)
 
 	def on_mouse_scroll(self, x, y, dx, dy):
-		self.view.camera.mouse_zoom_wheel(dy)
+		zoom_factor = 1.05
+		self.view.fov *= zoom_factor if dy<0 else 1/zoom_factor
 
 class EventViewer():
 	def __init__(self, input_file_path):
