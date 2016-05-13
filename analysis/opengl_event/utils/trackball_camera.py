@@ -152,12 +152,12 @@ def project_z(r, x, y):
 
 
 class TrackballCamera:
-	def __init__(self, radius=1.0):
+	def __init__(self, radius=2.0):
 		""" initialize the camera, giving a radius from the focal point for
 		the camera eye.  Update focal point & up via the update_modelview call.
 		"""
 		# the quaternion storing the rotation
-		self.rot_quat = np.array([0.,0.,0.,1.])
+		self.rot_quat = np.array([0.67678407, 0.09912717, 0.10340824, 0.7221107])
 		# the last mouse update
 		self.last_x, self.last_y = None, None
 		# camera vars

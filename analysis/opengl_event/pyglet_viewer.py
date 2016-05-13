@@ -25,7 +25,7 @@ class Hud():
 		glMatrixMode(GL_MODELVIEW)
 		glPushMatrix()
 		glLoadIdentity()
-		self.text.draw()
+		#self.text.draw()
 		self.fps.draw()
 		glPopMatrix()
 
@@ -58,6 +58,16 @@ class World():
 
 		glNewList(num_list, GL_COMPILE)
 		glPushMatrix()
+		glBegin(GL_LINE_STRIP)
+		# bounding box
+		glColor3f(*colors['base1'])
+		glVertex3f(self.bounding_box[0][0],self.bounding_box[1][0],self.bounding_box[2][1])
+		glVertex3f(self.bounding_box[0][1],self.bounding_box[1][0],self.bounding_box[2][1])
+		glVertex3f(self.bounding_box[0][1],self.bounding_box[1][1],self.bounding_box[2][1])
+		glVertex3f(self.bounding_box[0][0],self.bounding_box[1][1],self.bounding_box[2][1])
+		glVertex3f(self.bounding_box[0][0],self.bounding_box[1][0],self.bounding_box[2][1])
+		glEnd()
+
 		glBegin(GL_LINES)
 		# coordinate system
 		glColor3f(*colors['red'])
@@ -97,15 +107,13 @@ class World():
 		
 		glPointSize(5)
 		glBegin(GL_POINTS)
-		glColor3f(1,0,0) # draw start points
-		for start_point in self.start_points:
-			glVertex3f(*start_point)
-		glColor3f(0,1,0) # draw end points
-		for end_point in self.end_points:
-			glVertex3f(*end_point)
+		glColor3f(*colors['green']) # draw start points
+		for start_point in self.start_points: glVertex3f(*start_point)
+		glColor3f(*colors['red']) # draw end points
+		for end_point in self.end_points: glVertex3f(*end_point)
 		glEnd()
 
-		glColor3f(0,0,0) # draw drift lines
+		glColor4f(0,0,0,.3) # draw drift lines
 		for vertex_list in self.vertex_lists:
 			vertex_list.draw(pyglet.gl.GL_LINE_STRIP)
 
@@ -116,7 +124,7 @@ class View():
 		self.width, self.height = width, height
 		self.world = world
 		self.hud = hud
-		self.camera = TrackballCamera(3.0)
+		self.camera = TrackballCamera(radius=4.)
 
 	def update(self, width, height):
 		self.width, self.height = width, height
@@ -128,7 +136,7 @@ class View():
 		glMatrixMode(GL_PROJECTION)
 		glLoadIdentity()
 		aspect_ratio = self.width/self.height
-		gluPerspective(40., aspect_ratio, 0.01, 100)
+		gluPerspective(60., aspect_ratio, 0.01, 100)
 
 	def hud_projection(self):
 		glMatrixMode(GL_PROJECTION)
@@ -154,9 +162,10 @@ class Window(pyglet.window.Window):
 		#self.push_handlers(pyglet.window.event.WindowEventLogger()) # to show window events
 
 	def init_opengl(self):
-		glClearColor(colors['base3'][0], colors['base3'][1], colors['base3'][2], 1.)
+		#glClearColor(colors['base3'][0], colors['base3'][1], colors['base3'][2], 1.)
+		glClearColor(1,1,1,1)
 		glEnable(GL_DEPTH_TEST)
-		#glEnable(GL_POINT_SMOOTH)
+		glEnable(GL_BLEND)
 
 	def on_draw(self):
 		self.clear()
@@ -193,4 +202,4 @@ class EventViewer():
 		pyglet.app.run()
 
 if __name__ == '__main__':
-	EventViewer('/localscratch/simulation_files/MicroMegas-Simulation/outfiles/drift_lines.root')
+	EventViewer('/localscratch/simulation_files/MicroMegas-Simulation/outfiles/drift_lines_90_10.root')
