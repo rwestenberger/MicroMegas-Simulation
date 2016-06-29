@@ -13,21 +13,27 @@ from utils import data_io
 from utils.solarized import colors
 
 class Hud():
-	def __init__(self, view):
+	def __init__(self, window, view):
+		self.window = window
 		self.view = view
 		self.font = font.load('Helvetica', 10)
 		self.fps = clock.ClockDisplay(font=self.font, interval=0.2, color=(0,0,0, 1))
-		self.update_text()
 
-	def update_text(self, text='Test'):
-		props = dict(x=self.view.width-10, y=10, halign=font.Text.RIGHT, valign=font.Text.BOTTOM, color=(0, 0, 0, 0.5))
+	def update(self):
+		'''Called on window resize.'''
+		self.update_text()
+		self.draw()
+
+	def update_text(self, text=None):
+		if not text: text = 'FOV: {:.3}'.format(self.view.fov)
+		props = dict(x=self.window.width-10, y=10, halign=font.Text.RIGHT, valign=font.Text.BOTTOM, color=(0, 0, 0, 0.5))
 		self.text = font.Text(self.font, text, **props)
 
 	def draw(self):
 		glMatrixMode(GL_MODELVIEW)
 		glPushMatrix()
 		glLoadIdentity()
-		#self.text.draw()
+		self.text.draw()
 		self.fps.draw()
 		glPopMatrix()
 
@@ -44,7 +50,7 @@ class World():
 		self.start_points = []
 		self.end_points = []
 		num_drift_lines = len(event_data['x_e'])
-		pbar = ProgressBar(widgets=[SimpleProgress(sep='/'), ' ', Percentage(), ' ', Bar(marker='█', left='|', right='|')], maxval=num_drift_lines).start()
+		pbar = ProgressBar(widgets=['Track: ', SimpleProgress(sep='/'), ' ', Percentage(), ' ', Bar(marker='█', left='', right='')], maxval=num_drift_lines).start()
 		for drift_line in range(num_drift_lines):
 			pbar.update(drift_line)
 			number_of_vertices = len(event_data['x_e'][drift_line])
@@ -123,29 +129,29 @@ class World():
 		glPopMatrix()
 
 class View():
-	def __init__(self, width, height, world, hud):
-		self.width, self.height = width, height
-		self.world = world
-		self.hud = hud
+	def __init__(self, window, input_file_path):
+		self.window = window
+		self.world = World(input_file_path)
+		self.hud = Hud(self.window, self)
 		self.camera = TrackballCamera(radius=4.)
 		self.fov = 60.
+		self.hud.update_text()
 
 	def update(self, width, height):
-		self.width, self.height = width, height
 		glViewport(0, 0, width, height)
-		self.hud.update_text()
+		self.hud.update()
 		self.camera.update_modelview()
 
 	def world_projection(self):
 		glMatrixMode(GL_PROJECTION)
 		glLoadIdentity()
-		aspect_ratio = self.width/self.height
+		aspect_ratio = self.window.width/self.window.height
 		gluPerspective(self.fov, aspect_ratio, 0.01, 100)
 
 	def hud_projection(self):
 		glMatrixMode(GL_PROJECTION)
 		glLoadIdentity()
-		gluOrtho2D(0, self.width, 0, self.height)
+		gluOrtho2D(0, self.window.width, 0, self.window.height)
 
 	def draw(self):
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
@@ -157,12 +163,10 @@ class View():
 
 class Window(pyglet.window.Window):
 	def __init__(self, width, height, input_file_path, title=''):
-		super(Window, self).__init__(width, height, title)
+		super().__init__(width=width, height=height, caption=title)
 		self.init_opengl()
 
-		self.world = World(input_file_path)
-		self.hud = Hud(self)
-		self.view = View(self.width, self.height, self.world, self.hud)
+		self.view = View(self, input_file_path)
 		#self.push_handlers(pyglet.window.event.WindowEventLogger()) # to show window events
 
 	def init_opengl(self):
@@ -183,7 +187,7 @@ class Window(pyglet.window.Window):
 		if button == window.mouse.MIDDLE and not modifiers:
 			self.view.camera.mouse_roll(norm_x, norm_y, dragging=False)
 		if button == window.mouse.MIDDLE and modifiers == window.key.MOD_SHIFT:
-			self.view.camera.mouse_move(norm_x, norm_y, dragging=False)
+			self.view.camera.mouse_move(norm_x, norm_y, self.view.fov, dragging=False)
 		if button == window.mouse.MIDDLE and modifiers == window.key.MOD_CTRL:
 			self.view.camera.mouse_zoom(norm_x, norm_y, dragging=False)
 
@@ -192,13 +196,15 @@ class Window(pyglet.window.Window):
 		if button == window.mouse.MIDDLE and not modifiers:
 			self.view.camera.mouse_roll(norm_x, norm_y)
 		if button == window.mouse.MIDDLE and modifiers == window.key.MOD_SHIFT:
-			self.view.camera.mouse_move(norm_x, norm_y)
+			self.view.camera.mouse_move(norm_x, norm_y, self.view.fov)
 		if button == window.mouse.MIDDLE and modifiers == window.key.MOD_CTRL:
 			self.view.camera.mouse_zoom(norm_x, norm_y)
 
 	def on_mouse_scroll(self, x, y, dx, dy):
+		# zoom implemented according to: https://www.opengl.org/archives/resources/faq/technical/viewing.htm Section 8.040
 		zoom_factor = 1.05
 		self.view.fov *= zoom_factor if dy<0 else 1/zoom_factor
+		self.view.hud.update_text()
 
 class EventViewer():
 	def __init__(self, input_file_path):

@@ -199,8 +199,7 @@ class TrackballCamera:
 		The initial click should set dragging to False.        
 		"""
 		if self.last_x:
-			dx = norm_mouse_x - self.last_x
-			dy = norm_mouse_y - self.last_y
+			dx, dy = self.last_x - norm_mouse_x, self.last_y - norm_mouse_y
 			norm_mouse_r_delta = 20*np.sqrt(dx*dx+dy*dy)
 			if dy > 0:
 				norm_mouse_r_delta = -norm_mouse_r_delta
@@ -216,15 +215,14 @@ class TrackballCamera:
 		if self.cam_eye[2] < .1: self.cam_eye[2] = .1
 		self.update_modelview()
 
-	def mouse_move(self, norm_mouse_x, norm_mouse_y, dragging=True):
+	def mouse_move(self, norm_mouse_x, norm_mouse_y, fov, dragging=True):
 		"""When you click or drag the mouse button, move the camera."""
 		if dragging:
-			dx = self.last_x - norm_mouse_x
-			dy = self.last_y - norm_mouse_y
+			dx, dy = self.last_x - norm_mouse_x, self.last_y - norm_mouse_y
 			forward = self.cam_focus-self.cam_eye
 			right = np.cross(forward, self.cam_up)
-			self.cam_eye += dx*right + dy*self.cam_up
-			self.cam_focus += dx*right + dy*self.cam_up
+			self.cam_eye += (dx*right + dy*self.cam_up)*fov*.025
+			self.cam_focus += (dx*right + dy*self.cam_up)*fov*.025
 			self.update_modelview()
 		self.last_x, self.last_y = norm_mouse_x, norm_mouse_y
 
