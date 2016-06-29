@@ -43,7 +43,7 @@ int main(int argc, char* argv[]) {
 	)
 	]]] */
 
-	const int maxAvalancheSize = 0; // constrains the maximum avalanche size, 0 means no limit
+	const int maxAvalancheSize = 40; // constrains the maximum avalanche size, 0 means no limit
 	const double driftField = 600.0; // V/cm, should be positive for drift in -z direction
 	double areaXmin = -5.0, areaXmax = -areaXmin;
 	double areaYmin = -5.0, areaYmax = -areaYmin;
@@ -118,7 +118,7 @@ int main(int argc, char* argv[]) {
 	cog.outl("gas->SetTemperature({}+273.15);".format(conf["detector"]["temperature"]))
 	cog.outl("gas->SetPressure({} * 7.50062);".format(conf["detector"]["pressure"]))
 	]]]*/
-	gas->SetComposition("ar",93.0, "co2",7.0);
+	gas->SetComposition("xe",99.0, "co2",1.0);
 	gas->SetTemperature(20.+273.15);
 	gas->SetPressure(100. * 7.50062);
 	//[[[end]]]
@@ -151,6 +151,9 @@ int main(int argc, char* argv[]) {
 	avalanchemicroscopic->EnablePlotting(viewdrift);
 	*/
 
+	SaveDrift* savedrift = new SaveDrift("/localscratch/simulation_files/MicroMegas-Simulation/outfiles/drift_lines.root");
+	avalanchemicroscopic->EnableSaving(savedrift);
+
 	// actual simulation
 	for (int i=0; i<numberOfEvents; i++) {
 		// Set the initial position [cm], direction, starting time [ns] and initial energy [eV]
@@ -167,9 +170,9 @@ int main(int argc, char* argv[]) {
 		cout << "\r" << setw(4) << i/(double)numberOfEvents*100. << "% done   "; flush(cout);
 		avalanchemicroscopic->AvalancheElectron(initialPosition.x(), initialPosition.y(), initialPosition.z(), initialTime, initialEnergy, initialDirection.x(), initialDirection.y(), initialDirection.z());
 
-		Int_t ne, ni;
-		avalanchemicroscopic->GetAvalancheSize(ne, ni);
-		nele = ne;
+		//Int_t ne, ni;
+		//avalanchemicroscopic->GetAvalancheSize(ne, ni);
+		//nele = ne;
 
 		// local variables to be pushed into vectors
 		Double_t xi, yi, zi, ti, ei;
@@ -193,7 +196,8 @@ int main(int argc, char* argv[]) {
 		x0.clear(); y0.clear(); z0.clear(); e0.clear(); t0.clear();
 		x1.clear(); y1.clear(); z1.clear(); e1.clear(); t1.clear();
 
-		cout << "Number of electrons: " << nele << endl;
+		//cout << "Avalanche Size     : " << nele << endl;
+		cout << "Electron end points: " << nelep << endl;
 	}
 	cout << endl;
 
@@ -201,6 +205,8 @@ int main(int argc, char* argv[]) {
 	outputFile->Write();
 	outputFile->Close();
 	inputFile->Close();
+
+	delete savedrift;
 
 	/*
 	viewdrift->Plot();
