@@ -32,7 +32,12 @@ int main(int argc, char * argv[]) {
 	double areaYmin = -4.5, areaYmax = -areaYmin;
 	double areaZmin = -152.1e-4, areaZmax = 300.1e-4;
 	
-	// Define the medium
+	ComponentVoxel *fm = new ComponentVoxel();
+	fm->SetMesh(65,65,227, -64e-4,64e-4, -64e-4,64e-4, areaZmin,areaZmax);
+	fm->LoadData("field_clean.txt", "XYZ", true, false, 1e-4, 1., 1.);
+	fm->EnablePeriodicityX();
+	fm->EnablePeriodicityY();
+
 	MediumMagboltz* gas = new MediumMagboltz();
 	/*[[[cog
 	from MMconfig import *
@@ -49,12 +54,7 @@ int main(int argc, char * argv[]) {
 	gas->SetMaxElectronEnergy(200.);
 	gas->Initialise(true);
 
-	ComponentVoxel *fm = new ComponentVoxel();
 	fm->SetMedium(0, gas);
-	fm->SetMesh(65,65,227, -64e-4,64e-4, -64e-4,64e-4, areaZmin,areaZmax);
-	fm->LoadData("field_clean.txt", "XYZ", true, false, 1e-4, 1., 1.);
-	fm->EnablePeriodicityX();
-	fm->EnablePeriodicityY();
 
 	Sensor* sensor = new Sensor();
 	sensor->AddComponent(fm);
