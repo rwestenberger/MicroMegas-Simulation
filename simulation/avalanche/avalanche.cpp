@@ -46,7 +46,7 @@ int main(int argc, char * argv[]) {
 	cog.outl("gas->SetTemperature({}+273.15);".format(conf["detector"]["temperature"]))
 	cog.outl("gas->SetPressure({} * 7.50062);".format(conf["detector"]["pressure"]))
 	]]]*/
-	gas->SetComposition("ar",93.0, "co2",7.0);
+	gas->SetComposition("co2",7.0, "ar",93.0);
 	gas->SetTemperature(20.+273.15);
 	gas->SetPressure(100. * 7.50062);
 	//[[[end]]]
@@ -59,6 +59,15 @@ int main(int argc, char * argv[]) {
 	Sensor* sensor = new Sensor();
 	sensor->AddComponent(fm);
 	sensor->SetArea(areaXmin, areaYmin, areaZmin, areaXmax, areaYmax, areaZmax);
+
+	cout << "-------" << endl;
+	double vmin, vmax;
+	sensor->GetVoltageRange(vmin, vmax);
+	cout << fm->GetMedium(0., 0., 100e-4) << endl;
+	Medium* med = NULL;
+	cout << sensor->GetMedium(0., 0., 100e-4, med) << endl;
+	cout << med << endl;
+	cout << "-------" << endl;
 
 	AvalancheMicroscopic* avalanchemicroscopic = new AvalancheMicroscopic();
 	avalanchemicroscopic->SetSensor(sensor);
@@ -73,21 +82,21 @@ int main(int argc, char * argv[]) {
 	avalanchemicroscopic->EnablePlotting(viewdrift);
 	*/
 
-	int numberOfEvents = 10;
+	int numberOfEvents = 3;
 	int eventsPassed = 0;
 
 	TRandom3* rand = new TRandom3();
 
 	// actual simulation
 	for (int i=0; i<numberOfEvents; i++) {
-		double xRand = rand->Uniform(areaXmin, areaXmax);
-		double yRand = rand->Uniform(areaYmin, areaYmax);
+		double xRand = rand->Uniform(-64e4, 64e4);
+		double yRand = rand->Uniform(-64e4, 64e4);
 		/* [d[[cog
 		from MMconfig import *
 		cog.outl("TVector3 initialPosition = TVector3(xRand, yRand, {});".format(conf["amplification"]["z_max_safety"]))
 		]d]] */
 		// [d[[end]d]]
-		TVector3 initialPosition = TVector3(32e-4, 32e-4, 100e-4);
+		TVector3 initialPosition = TVector3(xRand, yRand, 100e-4);
 		TVector3 initialDirection = TVector3(0., 0., -1.); // 0,0,0 for random initial direction
 		Double_t initialTime = 0.;
 		Double_t initialEnergy = 100.;
