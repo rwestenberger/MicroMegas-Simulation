@@ -37,6 +37,7 @@ int main(int argc, char * argv[]) {
     fm->LoadData("field.txt", "XYZ", true, false, 1e-4, 1., 1.);
     fm->EnablePeriodicityX();
     fm->EnablePeriodicityY();
+    //fm->PrintRange();
 
 	// Define the medium
 	MediumMagboltz* gas = new MediumMagboltz();
@@ -47,7 +48,7 @@ int main(int argc, char * argv[]) {
 	cog.outl("gas->SetTemperature({}+273.15);".format(conf["detector"]["temperature"]))
 	cog.outl("gas->SetPressure({} * 7.50062);".format(conf["detector"]["pressure"]))
 	]]]*/
-	gas->SetComposition("co2",7.0, "ar",93.0);
+	gas->SetComposition("ar",93.0, "co2",7.0);
 	gas->SetTemperature(20.+273.15);
 	gas->SetPressure(100. * 7.50062);
 	//[[[end]]]
@@ -75,45 +76,50 @@ int main(int argc, char * argv[]) {
 	avalanchemicroscopic->EnablePlotting(viewdrift);
 	*/
 
+	int numberOfEvents = 10;
+	int eventsPassed = 0;
+
+	TRandom3* rand = new TRandom3();
+
 	// actual simulation
 	for (int i=0; i<numberOfEvents; i++) {
-		int numberOfElectrons;
+		double xRand = rand->Uniform(areaXmin, areaXmax);
+		double yRand = rand->Uniform(areaYmin, areaYmax);
+		/* [[[cog
+		from MMconfig import *
+		cog.outl("TVector3 initialPosition = TVector3(xRand, yRand, {});".format(conf["amplification"]["z_max_safety"]))
+		]]] */
+		TVector3 initialPosition = TVector3(xRand, yRand, 100e-4);
+		// [[[end]]]
+		TVector3 initialDirection = TVector3(0., 0., -1.); // 0,0,0 for random initial direction
+		Double_t initialTime = 0.;
+		Double_t initialEnergy = 0.;
 
-		inputTree->GetEvent(i, 0); // 0 get only active branches, 1 get all branches
-		//inputTree->Show(i);
-		numberOfElectrons = inNele;
+		cout << "(" << initialPosition.x() << ", " << initialPosition.y() << ", " << initialPosition.z() << ")" << endl;
 
-		for (int e=0; e<numberOfElectrons; e++) {
-			TVector3 initialPosition = TVector3(inPosX->at(e), inPosY->at(e), 100e-4);
-			TVector3 initialDirection = TVector3(0., 0., -1.); // 0,0,0 for random initial direction
-			Double_t initialTime = inT->at(e);
-			Double_t initialEnergy = inEkin->at(e); // override default energy
+		avalanchemicroscopic->AvalancheElectron(initialPosition.x(), initialPosition.y(), initialPosition.z(), initialTime, initialEnergy, initialDirection.x(), initialDirection.y(), initialDirection.z());
 
-			avalanchemicroscopic->AvalancheElectron(initialPosition.x(), initialPosition.y(), initialPosition.z(), initialTime, initialEnergy, initialDirection.x(), initialDirection.y(), initialDirection.z());
+		Int_t ne, ni;
+		avalanchemicroscopic->GetAvalancheSize(ne, ni);
 
-			Int_t ne, ni;
-			avalanchemicroscopic->GetAvalancheSize(ne, ni);
-			nele = ne;
+		Double_t xi, yi, zi, ti, ei;
+		Double_t xf, yf, zf, tf, ef;
+		Int_t stat;
+		int np = avalanchemicroscopic->GetNumberOfElectronEndpoints();
+		cout << "Number of electron endpoints: " << np << endl;
 
-			// local variables to be pushed into vectors
-			Double_t xi, yi, zi, ti, ei;
-			Double_t xf, yf, zf, tf, ef;
-			Int_t stat;
-
-			// number of electron endpoints - 1 is the number of hits on the readout for an event passing the mesh
-			int np = avalanchemicroscopic->GetNumberOfElectronEndpoints();
-			nelep = np;
-			cout << "Number of electron endpoints: " << np << endl;
-
-			for (int j=0; j<np; j++) {
-				avalanchemicroscopic->GetElectronEndpoint(j, xi, yi, zi, ti, ei, xf, yf, zf, tf, ef, stat);
-				cout << "(" << xi << ", " << yi << ", " << zi << ", " << ti << ", " << ei << ") -> (" << xi << ", " << yi << ", " << zi << ", " << ti << ", " << ei << "): " << stat << endl;
+		for (int j=0; j<np; j++) {
+			avalanchemicroscopic->GetElectronEndpoint(j, xi, yi, zi, ti, ei, xf, yf, zf, tf, ef, stat);
+			if (zf < 0.) { // dont know if this is a good selection
+				cout << "Passed!" << endl;
+				eventsPassed++;
+				break;
 			}
-
-			cout << setw(5) << i/(double)numberOfEvents*100. << "% of all events done." << endl;
-			cout << setw(4) << e/(double)numberOfElectrons*100. << "% of this event done." << endl;
 		}
+
+		cout << setw(5) << i/(double)numberOfEvents*100. << "% of all events done." << endl;
 	}
+	cout << setw(4) << (double)eventsPassed/(double)numberOfEvents*100. << "% transparency." << endl;
 
 	/*
 	viewdrift->Plot();
