@@ -30,15 +30,14 @@ int main(int argc, char * argv[]) {
 	const int maxAvalancheSize = 0; // constrains the maximum avalanche size, 0 means no limit
 	double areaXmin = -4.5, areaXmax = -areaXmin;
 	double areaYmin = -4.5, areaYmax = -areaYmin;
-	double areaZmin = -154e-4, areaZmax = 300e-4;
+	double areaZmin = -152.1e-4, areaZmax = 300.1e-4;
 
 	ComponentVoxel *fm = new ComponentVoxel();
-    fm->SetMesh(10,10,40, areaXmin,areaXmax, areaYmin,areaYmax, areaZmin,areaZmax);
-    fm->LoadData("field.txt", "XYZ", true, false, 1e-4, 1., 1.);
-    fm->EnablePeriodicityX();
-    fm->EnablePeriodicityY();
-    //fm->PrintRange();
-
+	fm->SetMesh(65,65,227, -64e-4,64e-4, -64e-4,64e-4, areaZmin,areaZmax);
+	fm->LoadData("field_clean.txt", "XYZ", true, false, 1e-4, 1., 1.);
+	fm->EnablePeriodicityX();
+	fm->EnablePeriodicityY();
+	
 	// Define the medium
 	MediumMagboltz* gas = new MediumMagboltz();
 	/*[[[cog
@@ -48,7 +47,7 @@ int main(int argc, char * argv[]) {
 	cog.outl("gas->SetTemperature({}+273.15);".format(conf["detector"]["temperature"]))
 	cog.outl("gas->SetPressure({} * 7.50062);".format(conf["detector"]["pressure"]))
 	]]]*/
-	gas->SetComposition("ar",93.0, "co2",7.0);
+	gas->SetComposition("co2",7.0, "ar",93.0);
 	gas->SetTemperature(20.+273.15);
 	gas->SetPressure(100. * 7.50062);
 	//[[[end]]]
@@ -85,12 +84,12 @@ int main(int argc, char * argv[]) {
 	for (int i=0; i<numberOfEvents; i++) {
 		double xRand = rand->Uniform(areaXmin, areaXmax);
 		double yRand = rand->Uniform(areaYmin, areaYmax);
-		/* [[[cog
+		/* [d[[cog
 		from MMconfig import *
 		cog.outl("TVector3 initialPosition = TVector3(xRand, yRand, {});".format(conf["amplification"]["z_max_safety"]))
-		]]] */
-		TVector3 initialPosition = TVector3(xRand, yRand, 100e-4);
-		// [[[end]]]
+		]d]] */
+		// [d[[end]d]]
+		TVector3 initialPosition = TVector3(0., 0., 200e-4);
 		TVector3 initialDirection = TVector3(0., 0., -1.); // 0,0,0 for random initial direction
 		Double_t initialTime = 0.;
 		Double_t initialEnergy = 0.;
