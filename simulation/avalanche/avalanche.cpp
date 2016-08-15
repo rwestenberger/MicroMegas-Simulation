@@ -31,12 +31,6 @@ int main(int argc, char * argv[]) {
 	double areaXmin = -4.5, areaXmax = -areaXmin;
 	double areaYmin = -4.5, areaYmax = -areaYmin;
 	double areaZmin = -152.1e-4, areaZmax = 300.1e-4;
-
-	ComponentVoxel *fm = new ComponentVoxel();
-	fm->SetMesh(65,65,227, -64e-4,64e-4, -64e-4,64e-4, areaZmin,areaZmax);
-	fm->LoadData("field_clean.txt", "XYZ", true, false, 1e-4, 1., 1.);
-	fm->EnablePeriodicityX();
-	fm->EnablePeriodicityY();
 	
 	// Define the medium
 	MediumMagboltz* gas = new MediumMagboltz();
@@ -47,20 +41,24 @@ int main(int argc, char * argv[]) {
 	cog.outl("gas->SetTemperature({}+273.15);".format(conf["detector"]["temperature"]))
 	cog.outl("gas->SetPressure({} * 7.50062);".format(conf["detector"]["pressure"]))
 	]]]*/
-	gas->SetComposition("co2",7.0, "ar",93.0);
+	gas->SetComposition("ar",93.0, "co2",7.0);
 	gas->SetTemperature(20.+273.15);
 	gas->SetPressure(100. * 7.50062);
 	//[[[end]]]
 	gas->EnableDrift();							// Allow for drifting in this medium
 	gas->SetMaxElectronEnergy(200.);
 	gas->Initialise(true);
+
+	ComponentVoxel *fm = new ComponentVoxel();
 	fm->SetMedium(0, gas);
+	fm->SetMesh(65,65,227, -64e-4,64e-4, -64e-4,64e-4, areaZmin,areaZmax);
+	fm->LoadData("field_clean.txt", "XYZ", true, false, 1e-4, 1., 1.);
+	fm->EnablePeriodicityX();
+	fm->EnablePeriodicityY();
 
 	Sensor* sensor = new Sensor();
 	sensor->AddComponent(fm);
 	sensor->SetArea(areaXmin, areaYmin, areaZmin, areaXmax, areaYmax, areaZmax);
-	sensor->AddElectrode(fm, "readout");
-	sensor->SetTimeWindow(-2., 0.1, 80);
 
 	AvalancheMicroscopic* avalanchemicroscopic = new AvalancheMicroscopic();
 	avalanchemicroscopic->SetSensor(sensor);
@@ -89,10 +87,10 @@ int main(int argc, char * argv[]) {
 		cog.outl("TVector3 initialPosition = TVector3(xRand, yRand, {});".format(conf["amplification"]["z_max_safety"]))
 		]d]] */
 		// [d[[end]d]]
-		TVector3 initialPosition = TVector3(0., 0., 200e-4);
+		TVector3 initialPosition = TVector3(32e-4, 32e-4, 100e-4);
 		TVector3 initialDirection = TVector3(0., 0., -1.); // 0,0,0 for random initial direction
 		Double_t initialTime = 0.;
-		Double_t initialEnergy = 0.;
+		Double_t initialEnergy = 100.;
 
 		cout << "(" << initialPosition.x() << ", " << initialPosition.y() << ", " << initialPosition.z() << ")" << endl;
 
