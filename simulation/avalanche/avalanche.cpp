@@ -12,6 +12,7 @@
 
 #include "MediumMagboltz.hh"
 #include "ComponentElmer.hh"
+#include "ComponentVoxel.hh"
 #include "Sensor.hh"
 #include "ViewField.hh"
 #include "ViewCell.hh"
@@ -44,8 +45,8 @@ int main(int argc, char * argv[]) {
 	]]] */
 
 	const int maxAvalancheSize = 0; // constrains the maximum avalanche size, 0 means no limit
-	double areaXmin = -5.0, areaXmax = -areaXmin;
-	double areaYmin = -5.0, areaYmax = -areaYmin;
+	double areaXmin = -4.5, areaXmax = -areaXmin;
+	double areaYmin = -4.5, areaYmax = -areaYmin;
 	double areaZmin = -20e-4, areaZmax = 100.e-4 + 200e-4; // begin and end of the drift region, 100µm above the mesh where the field gets inhomogeneous (value from: http://iopscience.iop.org/article/10.1088/1748-0221/6/06/P06011/pdf)
 
 	// [[[end]]]
@@ -104,41 +105,11 @@ int main(int argc, char * argv[]) {
 	outputTree->Branch("x0", &x0); outputTree->Branch("y0", &y0); outputTree->Branch("z0", &z0); outputTree->Branch("e0", &e0); outputTree->Branch("t0", &t0);
 	outputTree->Branch("x1", &x1); outputTree->Branch("y1", &y1); outputTree->Branch("z1", &z1); outputTree->Branch("e1", &e1); outputTree->Branch("t1", &t1);
 
-	// Import an Elmer-created LEM and the weighting field for the readout electrode
-	/* [[[cog
-	from MMconfig import *
-
-	cog.outl(
-		"""
-		ComponentElmer* fm = new ComponentElmer(
-			"{0}/geometry/mesh.header",
-			"{0}/geometry/mesh.elements",
-			"{0}/geometry/mesh.nodes",
-			"{0}/dielectrics.dat",
-			"{0}/geometry/field.result",
-			"mm"
-		);
-	        fm->EnablePeriodicityX();
-	        fm->EnablePeriodicityY();
-		//fm->SetWeightingField("{0}/geometry/field_weight.result", "readout");
-		""".format(conf["amplification"]["geometry_path"])
-	)
-	]]] */
-
-		ComponentElmer* fm = new ComponentElmer(
-			"/localscratch/simulation_files/MicroMegas-Simulation/simulation/avalanche/geometry/geometry/mesh.header",
-			"/localscratch/simulation_files/MicroMegas-Simulation/simulation/avalanche/geometry/geometry/mesh.elements",
-			"/localscratch/simulation_files/MicroMegas-Simulation/simulation/avalanche/geometry/geometry/mesh.nodes",
-			"/localscratch/simulation_files/MicroMegas-Simulation/simulation/avalanche/geometry/dielectrics.dat",
-			"/localscratch/simulation_files/MicroMegas-Simulation/simulation/avalanche/geometry/geometry/field.result",
-			"mm"
-		);
-	        fm->EnablePeriodicityX();
-	        fm->EnablePeriodicityY();
-		//fm->SetWeightingField("/localscratch/simulation_files/MicroMegas-Simulation/simulation/avalanche/geometry/geometry/field_weight.result", "readout");
-		
-	//[[[end]]]
-	fm->PrintRange();
+	ComponentVoxel *fm = new ComponentVoxel();
+    fm->SetMesh(10,10,40, -64e-4,64e-4, -64e-4,64e-4, -154e-6,300e-6);
+    fm->LoadData("field.txt", "XYZ", true, false, 1e-4, 1., 1.);
+    fm->EnablePeriodicityX();
+    fm->EnablePeriodicityY();
 
 	// Define the medium
 	MediumMagboltz* gas = new MediumMagboltz();
@@ -156,14 +127,7 @@ int main(int argc, char * argv[]) {
 	gas->EnableDrift();							// Allow for drifting in this medium
 	gas->SetMaxElectronEnergy(200.);
 	gas->Initialise(true);
-
-	// Set the right material to be the gas (probably 0)
-	int nMaterials = fm->GetNumberOfMaterials();
-	for (int i=0; i<nMaterials; i++) {
-		if (fabs(fm->GetPermittivity(i) - 1.) < 1e-3) {
-			fm->SetMedium(i, gas);
-		}
-	}
+	fm->SetMedium(0, gas);
 
 	Sensor* sensor = new Sensor();
 	sensor->AddComponent(fm);
